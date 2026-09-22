@@ -30,4 +30,6 @@ export type Item = {
   status: ItemStatus;
   /** ISO timestamp of the last status change away from 'active'. */
   resolvedAt?: string;
+  /** Name of the drop-off point, for donated items. */
+  donatedTo?: string;
 };

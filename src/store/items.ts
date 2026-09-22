@@ -14,10 +14,16 @@ export type NewItem = {
   opened?: boolean;
 };
 
+export type DonationEntry = { id: string; quantity: number };
+
 type ItemsState = {
   items: Item[];
   addItem: (input: NewItem) => void;
   setStatus: (id: string, status: ItemStatus) => void;
+  /** Rescue: the user cooked these. */
+  markUsed: (ids: string[]) => void;
+  /** Donate: splits off partial quantities so the rest stays in the fridge. */
+  donate: (entries: DonationEntry[], dropOffName: string) => void;
   setOpened: (id: string, opened: boolean) => void;
   removeItem: (id: string) => void;
   loadDemoData: () => void;
@@ -73,6 +79,27 @@ export const useItems = create<ItemsState>()(
               : item,
           ),
         })),
+      markUsed: (ids) =>
+        set((s) => {
+          const resolvedAt = new Date().toISOString();
+          return {
+            items: s.items.map((item) => (ids.includes(item.id) ? { ...item, status: 'used' as const, resolvedAt } : item)),
+          };
+        }),
+      donate: (entries, dropOffName) =>
+        set((s) => {
+          const resolvedAt = new Date().toISOString();
+          const donated: Item[] = [];
+          const items = s.items.map((item) => {
+            const entry = entries.find((e) => e.id === item.id);
+            if (!entry || entry.quantity <= 0) return item;
+            const record = { status: 'donated' as const, resolvedAt, donatedTo: dropOffName };
+            if (entry.quantity >= item.quantity) return { ...item, ...record };
+            donated.push({ ...item, ...record, id: makeId(), quantity: entry.quantity });
+            return { ...item, quantity: item.quantity - entry.quantity };
+          });
+          return { items: [...items, ...donated] };
+        }),
       setOpened: (id, opened) =>
         set((s) => ({ items: s.items.map((item) => (item.id === id ? { ...item, opened } : item)) })),
       removeItem: (id) => set((s) => ({ items: s.items.filter((item) => item.id !== id) })),
