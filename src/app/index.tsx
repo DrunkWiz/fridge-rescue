@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { ItemRow } from '@/components/item-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
+import { usePro } from '@/lib/purchases';
 import { creatureMood, lifetimeImpact, type CreatureMood } from '@/lib/rules/creature';
 import { countUnits, estimateMeals, findDonationCandidates } from '@/lib/rules/surplus';
 import { findRescueCandidates, sortByUrgency } from '@/lib/rules/urgency';
@@ -135,6 +136,7 @@ export default function HomeScreen() {
   const items = useItems((s) => s.items);
   const loadDemoData = useItems((s) => s.loadDemoData);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const isPro = usePro((s) => s.isPro);
 
   // Recomputed per render so day boundaries roll over without a timer.
   const now = new Date();
@@ -142,6 +144,17 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <Pressable onPress={() => router.push('/paywall')} style={[styles.proPill, { borderColor: theme.tint }]}>
+              <ThemedText type="smallBold" style={{ color: theme.tint }}>
+                {isPro ? 'Pro ✓' : 'Go Pro'}
+              </ThemedText>
+            </Pressable>
+          ),
+        }}
+      />
       <FlatList
         data={active}
         keyExtractor={(item) => item.id}
@@ -189,6 +202,7 @@ const styles = StyleSheet.create({
   branch: { flex: 1, borderRadius: 16, borderWidth: 1.5, padding: 12, gap: 2 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 4, paddingBottom: 4 },
   action: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  proPill: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, marginRight: 12 },
   fab: {
     position: 'absolute',
     alignSelf: 'center',

@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
 import { generateRecipe, hasRecipeApiKey, type Recipe } from '@/lib/api/recipes';
+import { usePro } from '@/lib/purchases';
 import { daysUntil } from '@/lib/rules/dates';
 import { findRescueCandidates, RESCUE_WINDOW_DAYS } from '@/lib/rules/urgency';
 import { useItems } from '@/store/items';
@@ -62,6 +63,8 @@ export default function RescueScreen() {
   const insets = useSafeAreaInsets();
   const items = useItems((s) => s.items);
   const markUsed = useItems((s) => s.markUsed);
+  const isPro = usePro((s) => s.isPro);
+  const aiRecipes = isPro && hasRecipeApiKey;
 
   // Snapshot once so the list doesn't shift under the user mid-flow.
   const [now] = useState(() => new Date());
@@ -84,7 +87,7 @@ export default function RescueScreen() {
 
   const makeRecipe = async () => {
     setLoading(true);
-    setRecipe(await generateRecipe(picked));
+    setRecipe(await generateRecipe(picked, { ai: aiRecipes }));
     setLoading(false);
   };
 
@@ -122,7 +125,7 @@ export default function RescueScreen() {
 
         {!recipe && (
           <Button
-            label={hasRecipeApiKey ? 'Get a recipe' : 'Get a quick recipe'}
+            label={aiRecipes ? '✨ Get an AI recipe' : 'Get a quick recipe'}
             onPress={makeRecipe}
             loading={loading}
             disabled={picked.length === 0}
@@ -134,7 +137,11 @@ export default function RescueScreen() {
           <>
             <RecipeCard recipe={recipe} />
             <Button label={`I cooked it — rescue ${picked.length} item${picked.length === 1 ? '' : 's'}`} onPress={cooked} />
-            <Button label="Try another recipe" variant="outline" onPress={makeRecipe} loading={loading} />
+            {aiRecipes ? (
+              <Button label="Try another recipe" variant="outline" onPress={makeRecipe} loading={loading} />
+            ) : (
+              <Button label="✨ Get a chef-quality AI recipe with Pro" variant="outline" onPress={() => router.push('/paywall')} />
+            )}
           </>
         )}
       </ScrollView>

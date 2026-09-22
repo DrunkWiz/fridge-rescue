@@ -109,8 +109,9 @@ export function offlineRecipe(items: Item[]): Recipe {
   };
 }
 
-export async function generateRecipe(items: Item[]): Promise<Recipe> {
-  if (!API_KEY) return offlineRecipe(items);
+/** AI recipes are a Pro feature; everyone gets the offline recipe. */
+export async function generateRecipe(items: Item[], { ai }: { ai: boolean }): Promise<Recipe> {
+  if (!ai || !API_KEY) return offlineRecipe(items);
   try {
     return await generateWithClaude(items);
   } catch (error) {

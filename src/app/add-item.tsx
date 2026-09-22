@@ -2,12 +2,14 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 
+import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
 import { CATEGORIES, CATEGORY_KEYS } from '@/lib/categories';
 import { addDays } from '@/lib/rules/dates';
 import type { Category } from '@/lib/types';
+import { FREE_ITEM_LIMIT, usePro } from '@/lib/purchases';
 import { useItems } from '@/store/items';
 
 function Stepper({ value, onChange, min, step = 1 }: { value: number; onChange: (n: number) => void; min: number; step?: number }) {
@@ -32,6 +34,9 @@ function Stepper({ value, onChange, min, step = 1 }: { value: number; onChange: 
 export default function AddItemScreen() {
   const theme = useTheme();
   const addItem = useItems((s) => s.addItem);
+  const activeCount = useItems((s) => s.items.filter((item) => item.status === 'active').length);
+  const isPro = usePro((s) => s.isPro);
+  const atLimit = !isPro && activeCount >= FREE_ITEM_LIMIT;
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState<Category>('produce');
@@ -48,7 +53,7 @@ export default function AddItemScreen() {
   };
 
   const save = () => {
-    if (!canSave) return;
+    if (!canSave || atLimit) return;
     addItem({ name, category, quantity, expiresAt: expiresAt.toISOString(), opened });
     router.back();
   };
@@ -108,14 +113,16 @@ export default function AddItemScreen() {
           <Switch value={opened} onValueChange={setOpened} trackColor={{ true: theme.tint }} />
         </View>
 
-        <Pressable
-          onPress={save}
-          disabled={!canSave}
-          style={[styles.save, { backgroundColor: theme.tint, opacity: canSave ? 1 : 0.4 }]}>
-          <ThemedText type="smallBold" style={{ color: theme.onTint, fontSize: 16 }}>
-            Add to fridge
-          </ThemedText>
-        </Pressable>
+        {atLimit ? (
+          <View style={styles.limit}>
+            <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
+              The free plan tracks {FREE_ITEM_LIMIT} items. Rescue or donate something to make room — or go Pro for unlimited.
+            </ThemedText>
+            <Button label="See Pro" onPress={() => router.push('/paywall')} />
+          </View>
+        ) : (
+          <Button label="Add to fridge" onPress={save} disabled={!canSave} style={styles.save} />
+        )}
       </ScrollView>
     </ThemedView>
   );
@@ -131,5 +138,6 @@ const styles = StyleSheet.create({
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   stepButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   stepValue: { minWidth: 36, textAlign: 'center' },
-  save: { marginTop: 16, borderRadius: 999, paddingVertical: 14, alignItems: 'center' },
+  save: { marginTop: 16 },
+  limit: { marginTop: 16, gap: 10 },
 });
