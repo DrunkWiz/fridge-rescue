@@ -5,6 +5,9 @@
 - Code lives under `src/` (Expo SDK 57 template default): `src/app`, `src/components`, `src/lib/{rules,storage,api,purchases}`, `src/store`. Same shape as section 7, one level down.
 - Rules tests use Node's built-in runner (`npm test`), so rules files import siblings with explicit `.ts` extensions and only `import type` from outside `src/lib`.
 - `@types/node` is a devDependency purely so the test file typechecks.
+- Extra deps beyond section 5: `@anthropic-ai/sdk` (the one recipe call) and `react-native-purchases-ui` (RevenueCat Paywalls, required by section 6).
+- Testing happens in the browser preview (Expo web target) — keep it working. Native-only modules need a web path: RevenueCat uses its browser mode with a Test Store key; expo-camera and expo-location have web implementations.
+- Pro = RevenueCat `pro` entitlement OR the dev-only admin override (`EXPO_PUBLIC_ADMIN_PRO_KEY`, long-press the Pro pill). The override is ignored when `__DEV__` is false.
 
 ---
 
