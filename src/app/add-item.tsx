@@ -2,10 +2,12 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 
+import { BarcodeScanner } from '@/components/barcode-scanner';
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
+import { lookupBarcode } from '@/lib/api/openfoodfacts';
 import { CATEGORIES, CATEGORY_KEYS } from '@/lib/categories';
 import { addDays } from '@/lib/rules/dates';
 import type { Category } from '@/lib/types';
@@ -43,6 +45,8 @@ export default function AddItemScreen() {
   const [quantity, setQuantity] = useState(1);
   const [days, setDays] = useState(CATEGORIES.produce.defaultShelfLifeDays);
   const [opened, setOpened] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [lookupNote, setLookupNote] = useState<string | null>(null);
 
   const expiresAt = addDays(new Date(), days);
   const canSave = name.trim().length > 0;
@@ -50,6 +54,19 @@ export default function AddItemScreen() {
   const pickCategory = (next: Category) => {
     setCategory(next);
     setDays(CATEGORIES[next].defaultShelfLifeDays);
+  };
+
+  const onScanned = async (code: string) => {
+    setScanning(false);
+    setLookupNote('Looking up…');
+    const product = await lookupBarcode(code).catch(() => null);
+    if (!product) {
+      setLookupNote(`Barcode ${code} isn't in Open Food Facts — type the name instead.`);
+      return;
+    }
+    setName(product.name);
+    if (product.category) pickCategory(product.category);
+    setLookupNote(product.category ? 'Found it — check the date on the pack.' : 'Found it — pick a category.');
   };
 
   const save = () => {
@@ -72,6 +89,14 @@ export default function AddItemScreen() {
           onSubmitEditing={save}
           style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
         />
+
+        <Button label="Scan barcode" variant="outline" onPress={() => setScanning(true)} />
+        {lookupNote && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {lookupNote}
+          </ThemedText>
+        )}
+        <BarcodeScanner visible={scanning} onClose={() => setScanning(false)} onScanned={onScanned} />
 
         <ThemedText type="smallBold">Category</ThemedText>
         <View style={styles.chips}>

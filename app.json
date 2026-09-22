@@ -34,6 +34,20 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Fridge Rescue uses the camera to scan barcodes on food you add.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Fridge Rescue uses your location to find food banks near you."
+        }
       ]
     ],
     "experiments": {
