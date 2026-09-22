@@ -1,98 +1,152 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
+import { Creature } from '@/components/creature/creature';
+import { ItemRow } from '@/components/item-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { creatureMood, lifetimeImpact, type CreatureMood } from '@/lib/rules/creature';
+import { sortByUrgency } from '@/lib/rules/urgency';
+import type { Item } from '@/lib/types';
+import { useItems } from '@/store/items';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+const MOOD_LINE: Record<CreatureMood, string> = {
+  celebrating: 'You donated food — Sprout is glowing!',
+  thriving: 'Sprout is thriving on everything you rescued.',
+  content: 'Sprout is content. Keep an eye on the dates.',
+  hungry: 'Sprout is hungry — something needs rescuing.',
+  wilting: 'Sprout is wilting. Food went to waste this week.',
+};
+
+function ActionButton({ label, color, onPress }: { label: string; color: string; onPress: () => void }) {
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.action, { borderColor: color, opacity: pressed ? 0.6 : 1 }]}>
+      <ThemedText type="smallBold" style={{ color }}>
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
+function ItemActions({ item, onDone }: { item: Item; onDone: () => void }) {
+  const theme = useTheme();
+  const { setStatus, setOpened, removeItem } = useItems();
+  const run = (fn: () => void) => () => {
+    fn();
+    onDone();
+  };
+  return (
+    <View style={styles.actions}>
+      <ActionButton label="Used it" color={theme.tint} onPress={run(() => setStatus(item.id, 'used'))} />
+      <ActionButton
+        label={item.opened ? 'Mark unopened' : 'Mark opened'}
+        color={theme.textSecondary}
+        onPress={run(() => setOpened(item.id, !item.opened))}
+      />
+      <ActionButton label="Binned it" color={theme.danger} onPress={run(() => setStatus(item.id, 'wasted'))} />
+      <ActionButton label="Remove" color={theme.textSecondary} onPress={run(() => removeItem(item.id))} />
+    </View>
+  );
+}
+
+function Header({ items, now }: { items: Item[]; now: Date }) {
+  const theme = useTheme();
+  const mood = creatureMood(items, now);
+  const impact = lifetimeImpact(items);
+  return (
+    <View style={styles.header}>
+      <Creature mood={mood} />
+      <ThemedText style={styles.moodLine}>{MOOD_LINE[mood]}</ThemedText>
+      <View style={[styles.counters, { backgroundColor: theme.backgroundElement }]}>
+        <View style={styles.counter}>
+          <ThemedText type="subtitle" style={{ color: theme.tint }}>
+            {impact.mealsRescued}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            meals rescued
+          </ThemedText>
+        </View>
+        <View style={[styles.divider, { backgroundColor: theme.border }]} />
+        <View style={styles.counter}>
+          <ThemedText type="subtitle" style={{ color: theme.tint }}>
+            {impact.mealsDonated}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            meals donated
+          </ThemedText>
+        </View>
+      </View>
+    </View>
   );
 }
 
 export default function HomeScreen() {
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const items = useItems((s) => s.items);
+  const loadDemoData = useItems((s) => s.loadDemoData);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Recomputed per render so day boundaries roll over without a timer.
+  const now = new Date();
+  const active = useMemo(() => sortByUrgency(items), [items]);
+
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
+      <FlatList
+        data={active}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 96 }]}
+        ListHeaderComponent={<Header items={items} now={now} />}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <ThemedText themeColor="textSecondary" style={{ textAlign: 'center' }}>
+              Your fridge is empty. Add what you bought, and Sprout will tell you what needs eating first.
+            </ThemedText>
+            <Pressable onPress={loadDemoData}>
+              <ThemedText type="linkPrimary">Load a demo fridge</ThemedText>
+            </Pressable>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.itemBlock}>
+            <ItemRow item={item} now={now} onPress={() => setSelectedId(selectedId === item.id ? null : item.id)} />
+            {selectedId === item.id && <ItemActions item={item} onDone={() => setSelectedId(null)} />}
+          </View>
+        )}
+      />
+      <Pressable
+        onPress={() => router.push('/add-item')}
+        style={[styles.fab, { backgroundColor: theme.tint, bottom: insets.bottom + 24 }]}>
+        <ThemedText type="smallBold" style={{ color: theme.onTint, fontSize: 16 }}>
+          + Add item
         </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
+      </Pressable>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  container: { flex: 1 },
+  list: { paddingHorizontal: 16, gap: 8 },
+  header: { alignItems: 'center', paddingTop: 16, paddingBottom: 12, gap: 12 },
+  moodLine: { textAlign: 'center' },
+  counters: { flexDirection: 'row', borderRadius: 16, paddingVertical: 10, alignSelf: 'stretch' },
+  counter: { flex: 1, alignItems: 'center' },
+  divider: { width: 1, marginVertical: 6 },
+  empty: { alignItems: 'center', gap: 12, paddingVertical: 32, paddingHorizontal: 24 },
+  itemBlock: { gap: 6 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 4, paddingBottom: 4 },
+  action: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  fab: {
+    position: 'absolute',
+    alignSelf: 'center',
+    borderRadius: 999,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    boxShadow: '0 3px 8px rgba(0, 0, 0, 0.2)',
   },
 });

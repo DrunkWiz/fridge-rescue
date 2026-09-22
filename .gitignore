@@ -41,3 +41,10 @@ example
 # generated native folders
 /ios
 /android
+
+# secrets — never commit the AI key
+.env
+
+# generated native projects (Continuous Native Generation)
+/android
+/ios
