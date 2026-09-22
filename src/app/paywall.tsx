@@ -5,14 +5,14 @@ import RevenueCatUI from 'react-native-purchases-ui';
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { refreshCustomerInfo, usePro } from '@/lib/purchases';
+import { refreshCustomerInfo, useProState } from '@/lib/purchases';
 
 /**
  * RevenueCat's own paywall, configured remotely in the dashboard (offering,
  * packages, copy, layout). Nothing about pricing is hard-coded in the app.
  */
 export default function PaywallScreen() {
-  const configured = usePro((s) => s.configured);
+  const configured = useProState((s) => s.configured);
 
   const close = async () => {
     await refreshCustomerInfo();

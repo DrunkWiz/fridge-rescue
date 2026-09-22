@@ -9,7 +9,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { CATEGORIES, CATEGORY_KEYS } from '@/lib/categories';
 import { addDays } from '@/lib/rules/dates';
 import type { Category } from '@/lib/types';
-import { FREE_ITEM_LIMIT, usePro } from '@/lib/purchases';
+import { FREE_ITEM_LIMIT, useIsPro } from '@/lib/purchases';
 import { useItems } from '@/store/items';
 
 function Stepper({ value, onChange, min, step = 1 }: { value: number; onChange: (n: number) => void; min: number; step?: number }) {
@@ -35,7 +35,7 @@ export default function AddItemScreen() {
   const theme = useTheme();
   const addItem = useItems((s) => s.addItem);
   const activeCount = useItems((s) => s.items.filter((item) => item.status === 'active').length);
-  const isPro = usePro((s) => s.isPro);
+  const isPro = useIsPro();
   const atLimit = !isPro && activeCount >= FREE_ITEM_LIMIT;
 
   const [name, setName] = useState('');

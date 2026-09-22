@@ -8,7 +8,7 @@ import { ItemRow } from '@/components/item-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
-import { usePro } from '@/lib/purchases';
+import { useProSource } from '@/lib/purchases';
 import { creatureMood, lifetimeImpact, type CreatureMood } from '@/lib/rules/creature';
 import { countUnits, estimateMeals, findDonationCandidates } from '@/lib/rules/surplus';
 import { findRescueCandidates, sortByUrgency } from '@/lib/rules/urgency';
@@ -136,7 +136,7 @@ export default function HomeScreen() {
   const items = useItems((s) => s.items);
   const loadDemoData = useItems((s) => s.loadDemoData);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const isPro = usePro((s) => s.isPro);
+  const proSource = useProSource();
 
   // Recomputed per render so day boundaries roll over without a timer.
   const now = new Date();
@@ -147,9 +147,12 @@ export default function HomeScreen() {
       <Stack.Screen
         options={{
           headerRight: () => (
-            <Pressable onPress={() => router.push('/paywall')} style={[styles.proPill, { borderColor: theme.tint }]}>
-              <ThemedText type="smallBold" style={{ color: theme.tint }}>
-                {isPro ? 'Pro ✓' : 'Go Pro'}
+            <Pressable
+              onPress={() => router.push('/paywall')}
+              onLongPress={() => router.push('/admin')}
+              style={[styles.proPill, { borderColor: proSource === 'admin' ? theme.warning : theme.tint }]}>
+              <ThemedText type="smallBold" style={{ color: proSource === 'admin' ? theme.warning : theme.tint }}>
+                {proSource === 'purchase' ? 'Pro ✓' : proSource === 'admin' ? 'Pro (admin)' : 'Go Pro'}
               </ThemedText>
             </Pressable>
           ),

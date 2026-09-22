@@ -1,5 +1,8 @@
 import Purchases, { LOG_LEVEL, type CustomerInfo } from 'react-native-purchases';
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+import { persistStorage, STORAGE_KEYS } from '@/lib/storage';
 
 /** The single entitlement configured in the RevenueCat dashboard. */
 export const ENTITLEMENT_ID = 'pro';
@@ -13,17 +16,54 @@ export const FREE_ITEM_LIMIT = 25;
  */
 const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY;
 
+/**
+ * Admin bypass for testing Pro features without a purchase. Only honoured in
+ * development builds (__DEV__), so a release build can never unlock Pro this way.
+ */
+const ADMIN_KEY = process.env.EXPO_PUBLIC_ADMIN_PRO_KEY;
+export const adminBypassAvailable = __DEV__ && Boolean(ADMIN_KEY);
+
 type ProState = {
   configured: boolean;
-  isPro: boolean;
+  /** Real entitlement from RevenueCat. */
+  entitled: boolean;
+  /** Admin testing override; ignored outside development builds. */
+  adminOverride: boolean;
   setCustomerInfo: (info: CustomerInfo) => void;
+  /** Returns true if the key matched and Pro was switched on. */
+  unlockAdmin: (key: string) => boolean;
+  clearAdmin: () => void;
 };
 
-export const usePro = create<ProState>()((set) => ({
-  configured: false,
-  isPro: false,
-  setCustomerInfo: (info) => set({ isPro: info.entitlements.active[ENTITLEMENT_ID] !== undefined }),
-}));
+export const useProState = create<ProState>()(
+  persist(
+    (set) => ({
+      configured: false,
+      entitled: false,
+      adminOverride: false,
+      setCustomerInfo: (info) => set({ entitled: info.entitlements.active[ENTITLEMENT_ID] !== undefined }),
+      unlockAdmin: (key) => {
+        const ok = adminBypassAvailable && key.trim() === ADMIN_KEY;
+        if (ok) set({ adminOverride: true });
+        return ok;
+      },
+      clearAdmin: () => set({ adminOverride: false }),
+    }),
+    // Only the override is persisted; entitlement always comes fresh from RevenueCat.
+    { name: STORAGE_KEYS.admin, storage: persistStorage, partialize: (s) => ({ adminOverride: s.adminOverride }) },
+  ),
+);
+
+export type ProSource = 'purchase' | 'admin' | null;
+
+/** How the user has Pro, if at all. Purchases take precedence over the admin override. */
+export function useProSource(): ProSource {
+  return useProState((s) => (s.entitled ? 'purchase' : adminBypassAvailable && s.adminOverride ? 'admin' : null));
+}
+
+export function useIsPro(): boolean {
+  return useProSource() !== null;
+}
 
 let started = false;
 
@@ -32,15 +72,15 @@ export async function initPurchases(): Promise<void> {
   started = true;
   if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.WARN);
   Purchases.configure({ apiKey: API_KEY });
-  usePro.setState({ configured: true });
-  Purchases.addCustomerInfoUpdateListener((info) => usePro.getState().setCustomerInfo(info));
+  useProState.setState({ configured: true });
+  Purchases.addCustomerInfoUpdateListener((info) => useProState.getState().setCustomerInfo(info));
   await refreshCustomerInfo();
 }
 
 export async function refreshCustomerInfo(): Promise<void> {
-  if (!usePro.getState().configured) return;
+  if (!useProState.getState().configured) return;
   try {
-    usePro.getState().setCustomerInfo(await Purchases.getCustomerInfo());
+    useProState.getState().setCustomerInfo(await Purchases.getCustomerInfo());
   } catch (error) {
     console.warn('Could not fetch RevenueCat customer info', error);
   }

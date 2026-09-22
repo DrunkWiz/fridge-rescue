@@ -9,4 +9,5 @@ export const persistStorage = createJSONStorage(() => AsyncStorage);
 
 export const STORAGE_KEYS = {
   items: 'fridge-rescue/items',
+  admin: 'fridge-rescue/admin',
 } as const;

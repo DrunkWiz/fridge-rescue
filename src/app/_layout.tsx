@@ -29,6 +29,7 @@ export default function RootLayout() {
         <Stack.Screen name="rescue" options={{ title: 'Rescue' }} />
         <Stack.Screen name="donate" options={{ title: 'Donation box' }} />
         <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="admin" options={{ title: 'Admin', presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
   );

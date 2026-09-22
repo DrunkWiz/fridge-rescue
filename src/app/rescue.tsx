@@ -9,7 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
 import { generateRecipe, hasRecipeApiKey, type Recipe } from '@/lib/api/recipes';
-import { usePro } from '@/lib/purchases';
+import { useIsPro } from '@/lib/purchases';
 import { daysUntil } from '@/lib/rules/dates';
 import { findRescueCandidates, RESCUE_WINDOW_DAYS } from '@/lib/rules/urgency';
 import { useItems } from '@/store/items';
@@ -63,7 +63,7 @@ export default function RescueScreen() {
   const insets = useSafeAreaInsets();
   const items = useItems((s) => s.items);
   const markUsed = useItems((s) => s.markUsed);
-  const isPro = usePro((s) => s.isPro);
+  const isPro = useIsPro();
   const aiRecipes = isPro && hasRecipeApiKey;
 
   // Snapshot once so the list doesn't shift under the user mid-flow.
