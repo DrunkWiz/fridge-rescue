@@ -3,6 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
+import { ensureNotificationPermission, rescheduleExpiryReminders } from '@/lib/notifications';
 import { initPurchases } from '@/lib/purchases';
 import { useItems } from '@/store/items';
 
@@ -15,6 +16,16 @@ export default function RootLayout() {
   useEffect(() => {
     initPurchases();
   }, []);
+
+  // Keep expiry reminders in sync with the fridge. Permission is asked once there's something to remind about.
+  const items = useItems((s) => s.items);
+  const hasItems = items.length > 0;
+  useEffect(() => {
+    if (hasItems) ensureNotificationPermission();
+  }, [hasItems]);
+  useEffect(() => {
+    rescheduleExpiryReminders(items).catch((error) => console.warn('Could not schedule reminders', error));
+  }, [items]);
 
   useEffect(() => {
     if (hydrated) SplashScreen.hideAsync();
@@ -30,6 +41,7 @@ export default function RootLayout() {
         <Stack.Screen name="donate" options={{ title: 'Donation box' }} />
         <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="impact" options={{ title: 'Your impact' }} />
+        <Stack.Screen name="sprout" options={{ title: 'Sprout' }} />
         <Stack.Screen name="admin" options={{ title: 'Admin', presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>

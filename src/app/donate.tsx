@@ -17,6 +17,7 @@ import {
   type DonationCandidate,
   type SurplusReason,
 } from '@/lib/rules/surplus';
+import { withCelebration } from '@/store/game';
 import { useItems } from '@/store/items';
 
 const REASON_LABEL: Record<SurplusReason, string> = {
@@ -248,9 +249,11 @@ export default function DonateScreen() {
 
   const confirm = () => {
     if (!dropOff) return;
-    donate(
-      chosen.map((c) => ({ id: c.item.id, quantity: c.suggestedQuantity })),
-      dropOff.name,
+    withCelebration(() =>
+      donate(
+        chosen.map((c) => ({ id: c.item.id, quantity: c.suggestedQuantity })),
+        dropOff.name,
+      ),
     );
     router.back();
   };

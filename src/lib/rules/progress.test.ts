@@ -142,3 +142,13 @@ describe('diffProgress', () => {
     assert.equal(diffProgress(s, s), null);
   });
 });
+
+describe('wasteFreeStreak with a start date', () => {
+  it('never counts from before the user started, even with backdated items', () => {
+    assert.equal(wasteFreeStreak([item({ addedAt: at(-45) })], NOW, at(-2)), 2);
+  });
+
+  it('still resets on waste after the start date', () => {
+    assert.equal(wasteFreeStreak([item({ addedAt: at(-45) }), binned(1)], NOW, at(-5)), 1);
+  });
+});

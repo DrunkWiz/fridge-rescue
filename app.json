@@ -48,6 +48,12 @@
         {
           "locationWhenInUsePermission": "Fridge Rescue uses your location to find food banks near you."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#2F8F5B"
+        }
       ]
     ],
     "experiments": {

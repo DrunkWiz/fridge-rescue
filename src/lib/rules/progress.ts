@@ -59,14 +59,16 @@ function lastWasteDay(items: Item[], now: Date): string | null {
 }
 
 /**
- * Days in a row without wasting food, counted from the last waste (or from
- * when the user started). Leaving food to expire breaks it, not just binning.
+ * Days in a row without wasting food, counted from the last waste or from when
+ * the user started (`startedAt`) — whichever is later, so backdated items
+ * can't hand out a streak you didn't earn. Leaving food to expire breaks it too.
  */
-export function wasteFreeStreak(items: Item[], now: Date): number {
+export function wasteFreeStreak(items: Item[], now: Date, startedAt?: string | null): number {
   if (items.length === 0) return 0;
+  const firstAdded = items.reduce((a, b) => (a.addedAt < b.addedAt ? a : b)).addedAt;
+  const start = startedAt && startedAt > firstAdded ? startedAt : firstAdded;
   const lastWaste = lastWasteDay(items, now);
-  const firstUse = items.reduce((a, b) => (a.addedAt < b.addedAt ? a : b)).addedAt;
-  return Math.max(0, daysSince(lastWaste ?? firstUse, now));
+  return Math.max(0, daysSince(lastWaste && lastWaste > start ? lastWaste : start, now));
 }
 
 /** Monday 00:00 local of the week containing `date`. */
@@ -145,7 +147,7 @@ type Stats = {
   biggestDropOff: number;
 };
 
-function stats(items: Item[], now: Date): Stats {
+function stats(items: Item[], now: Date, startedAt?: string | null): Stats {
   const impact = lifetimeImpact(items);
   // A drop-off is every item donated to the same place at the same moment.
   const dropOffs = new Map<string, number>();
@@ -159,7 +161,7 @@ function stats(items: Item[], now: Date): Stats {
     donations: items.filter((i) => i.status === 'donated').length,
     mealsRescued: impact.mealsRescued,
     mealsDonated: impact.mealsDonated,
-    streak: wasteFreeStreak(items, now),
+    streak: wasteFreeStreak(items, now, startedAt),
     weeklyStreak: weeklyGoalStreak(items, now),
     biggestDropOff: Math.max(0, ...dropOffs.values()),
   };
@@ -177,8 +179,8 @@ export const BADGES: (Badge & { earned: (s: Stats) => boolean })[] = [
   { id: 'big-box', title: 'Big box', description: 'Drop off 10+ items at once', reward: 'star', earned: (s) => s.biggestDropOff >= 10 },
 ];
 
-export function earnedBadges(items: Item[], now: Date): BadgeId[] {
-  const s = stats(items, now);
+export function earnedBadges(items: Item[], now: Date, startedAt?: string | null): BadgeId[] {
+  const s = stats(items, now, startedAt);
   return BADGES.filter((b) => b.earned(s)).map((b) => b.id);
 }
 
@@ -190,9 +192,9 @@ export function unlockedAccessories(badges: BadgeId[], isPro: boolean): Accessor
 
 export type Snapshot = { xp: number; level: number; badges: BadgeId[] };
 
-export function snapshot(items: Item[], now: Date): Snapshot {
+export function snapshot(items: Item[], now: Date, startedAt?: string | null): Snapshot {
   const xp = totalXp(items);
-  return { xp, level: growth(xp).stage.level, badges: earnedBadges(items, now) };
+  return { xp, level: growth(xp).stage.level, badges: earnedBadges(items, now, startedAt) };
 }
 
 export type Celebration = {

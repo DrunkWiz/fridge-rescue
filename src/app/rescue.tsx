@@ -12,6 +12,7 @@ import { generateRecipe, hasRecipeApiKey, type Recipe } from '@/lib/api/recipes'
 import { useIsPro } from '@/lib/purchases';
 import { daysUntil } from '@/lib/rules/dates';
 import { findRescueCandidates, RESCUE_WINDOW_DAYS } from '@/lib/rules/urgency';
+import { withCelebration } from '@/store/game';
 import { useItems } from '@/store/items';
 
 function whenLabel(days: number): string {
@@ -92,7 +93,7 @@ export default function RescueScreen() {
   };
 
   const cooked = () => {
-    markUsed(picked.map((item) => item.id));
+    withCelebration(() => markUsed(picked.map((item) => item.id)));
     router.back();
   };
 

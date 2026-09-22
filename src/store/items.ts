@@ -18,6 +18,8 @@ export type DonationEntry = { id: string; quantity: number };
 
 type ItemsState = {
   items: Item[];
+  /** When this user started — streaks never count from before it. */
+  startedAt: string | null;
   addItem: (input: NewItem) => void;
   setStatus: (id: string, status: ItemStatus) => void;
   /** Rescue: the user cooked these. */
@@ -70,7 +72,8 @@ export const useItems = create<ItemsState>()(
   persist(
     (set) => ({
       items: [],
-      addItem: (input) => set((s) => ({ items: [...s.items, buildItem(input)] })),
+      startedAt: null,
+      addItem: (input) => set((s) => ({ items: [...s.items, buildItem(input)], startedAt: s.startedAt ?? new Date().toISOString() })),
       setStatus: (id, status) =>
         set((s) => ({
           items: s.items.map((item) =>
@@ -103,8 +106,8 @@ export const useItems = create<ItemsState>()(
       setOpened: (id, opened) =>
         set((s) => ({ items: s.items.map((item) => (item.id === id ? { ...item, opened } : item)) })),
       removeItem: (id) => set((s) => ({ items: s.items.filter((item) => item.id !== id) })),
-      loadDemoData: () => set({ items: demoItems(new Date()) }),
-      clearAll: () => set({ items: [] }),
+      loadDemoData: () => set({ items: demoItems(new Date()), startedAt: new Date().toISOString() }),
+      clearAll: () => set({ items: [], startedAt: null }),
     }),
     { name: STORAGE_KEYS.items, storage: persistStorage, version: 1 },
   ),
