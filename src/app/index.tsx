@@ -9,7 +9,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
 import { creatureMood, lifetimeImpact, type CreatureMood } from '@/lib/rules/creature';
-import { sortByUrgency } from '@/lib/rules/urgency';
+import { countUnits, estimateMeals, findDonationCandidates } from '@/lib/rules/surplus';
+import { findRescueCandidates, sortByUrgency } from '@/lib/rules/urgency';
 import type { Item } from '@/lib/types';
 import { useItems } from '@/store/items';
 
@@ -52,6 +53,50 @@ function ItemActions({ item, onDone }: { item: Item; onDone: () => void }) {
   );
 }
 
+function BranchCard({ title, body, color, onPress }: { title: string; body: string; color: string; onPress: () => void }) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.branch, { backgroundColor: theme.backgroundElement, borderColor: color, opacity: pressed ? 0.75 : 1 }]}>
+      <ThemedText type="smallBold" style={{ color }}>
+        {title}
+      </ThemedText>
+      <ThemedText type="small">{body}</ThemedText>
+    </Pressable>
+  );
+}
+
+/** The two branches: expiring perishables get cooked, long-life surplus gets donated. */
+function Branches({ items, now }: { items: Item[]; now: Date }) {
+  const theme = useTheme();
+  const rescue = findRescueCandidates(items, now);
+  const surplus = findDonationCandidates(items, now);
+  const units = countUnits(surplus);
+  if (rescue.length === 0 && surplus.length === 0) return null;
+  return (
+    <View style={styles.branches}>
+      {rescue.length > 0 && (
+        <BranchCard
+          title="Rescue"
+          body={`${rescue.length} item${rescue.length === 1 ? '' : 's'} to cook soon`}
+          color={theme.warning}
+          onPress={() => router.push('/rescue')}
+        />
+      )}
+      {surplus.length > 0 && (
+        <BranchCard
+          title="Donate"
+          body={`${units} spare item${units === 1 ? '' : 's'} ≈ ${estimateMeals(units)} meals`}
+          color={theme.tint}
+          onPress={() => router.push('/donate')}
+        />
+      )}
+    </View>
+  );
+}
+
 function Header({ items, now }: { items: Item[]; now: Date }) {
   const theme = useTheme();
   const mood = creatureMood(items, now);
@@ -79,6 +124,7 @@ function Header({ items, now }: { items: Item[]; now: Date }) {
           </ThemedText>
         </View>
       </View>
+      <Branches items={items} now={now} />
     </View>
   );
 }
@@ -139,6 +185,8 @@ const styles = StyleSheet.create({
   divider: { width: 1, marginVertical: 6 },
   empty: { alignItems: 'center', gap: 12, paddingVertical: 32, paddingHorizontal: 24 },
   itemBlock: { gap: 6 },
+  branches: { flexDirection: 'row', gap: 8, alignSelf: 'stretch' },
+  branch: { flex: 1, borderRadius: 16, borderWidth: 1.5, padding: 12, gap: 2 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 4, paddingBottom: 4 },
   action: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   fab: {

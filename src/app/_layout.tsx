@@ -21,6 +21,8 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="index" options={{ title: 'Fridge Rescue' }} />
         <Stack.Screen name="add-item" options={{ title: 'Add item', presentation: 'modal' }} />
+        <Stack.Screen name="rescue" options={{ title: 'Rescue' }} />
+        <Stack.Screen name="donate" options={{ title: 'Donation box' }} />
       </Stack>
     </ThemeProvider>
   );
