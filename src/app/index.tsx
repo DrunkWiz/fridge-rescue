@@ -106,7 +106,11 @@ function Header({ items, now }: { items: Item[]; now: Date }) {
     <View style={styles.header}>
       <Creature mood={mood} />
       <ThemedText style={styles.moodLine}>{MOOD_LINE[mood]}</ThemedText>
-      <View style={[styles.counters, { backgroundColor: theme.backgroundElement }]}>
+      <Pressable
+        onPress={() => router.push('/impact')}
+        accessibilityRole="button"
+        accessibilityHint="Opens your impact history"
+        style={[styles.counters, { backgroundColor: theme.backgroundElement }]}>
         <View style={styles.counter}>
           <ThemedText type="subtitle" style={{ color: theme.tint }}>
             {impact.mealsRescued}
@@ -124,7 +128,7 @@ function Header({ items, now }: { items: Item[]; now: Date }) {
             meals donated
           </ThemedText>
         </View>
-      </View>
+      </Pressable>
       <Branches items={items} now={now} />
     </View>
   );

@@ -10,6 +10,7 @@ import {
   findDonationCandidates,
   STALE_AFTER_DAYS,
 } from './surplus.ts';
+import { historyToCsv, monthlyHistory } from './impact.ts';
 import { findRescueCandidates, RESCUE_WINDOW_DAYS } from './urgency.ts';
 
 const NOW = new Date(2026, 8, 23, 12, 0, 0);
@@ -128,5 +129,31 @@ describe('creatureMood', () => {
 
   it('stops celebrating once the donation is old news', () => {
     assert.equal(creatureMood([resolved('donated', 5)], NOW), 'content');
+  });
+});
+
+describe('impact history', () => {
+  const done = (name: string, status: Item['status'], resolvedAt: Date, extra: Partial<Item> = {}) =>
+    item({ name, status, resolvedAt: resolvedAt.toISOString(), ...extra });
+
+  it('groups resolved items by month, newest first, counting units', () => {
+    const history = monthlyHistory([
+      done('Beans', 'donated', new Date(2026, 8, 20), { quantity: 3 }),
+      done('Milk', 'used', new Date(2026, 8, 2)),
+      done('Bread', 'wasted', new Date(2026, 7, 30)),
+      item({ name: 'Still in the fridge' }),
+    ]);
+    assert.deepEqual(
+      history.map((m) => [m.month, m.rescued, m.donated, m.wasted]),
+      [
+        ['2026-09', 1, 3, 0],
+        ['2026-08', 0, 0, 1],
+      ],
+    );
+  });
+
+  it('exports CSV with escaping and the drop-off name', () => {
+    const csv = historyToCsv([done('Beans, butter', 'donated', new Date(2026, 8, 20), { donatedTo: 'The "Pantry"' })]);
+    assert.equal(csv.split('\n')[1], '2026-09-20,"Beans, butter",tinned,1,donated,"The ""Pantry"""');
   });
 });
