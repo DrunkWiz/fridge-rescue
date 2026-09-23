@@ -70,6 +70,21 @@ Rescues feed it day to day; donations are the rare celebration. Waste has a visi
 
 Lifetime counters (**meals rescued** and **meals donated**) sit under the creature and on the shareable Impact card.
 
+### Why people keep coming back
+
+The app is only useful if it's opened *before* food goes off, so the game layer is built around that one habit:
+
+| Mechanic | What it does | Rule |
+|---|---|---|
+| **Growth** | Sprout grows from Seed to Ancient Tree: bigger, leafier, then blossoming | +10 XP per item rescued, +25 per item donated ([`progress.ts`](src/lib/rules/progress.ts)) |
+| **Waste-free streak** 🔥 | Days in a row without wasting food | Resets on binned food, *and* on a perishable left past its date. Counts from when you started, so backdated items can't grant an unearned streak |
+| **Weekly goal** 🎯 | 3 saves a week, with a weeks-in-a-row streak | Last week's streak stays alive until Sunday |
+| **Badges → wardrobe** 🏅 | 8 badges, each unlocking an accessory for Sprout (cap, scarf, crown, sunglasses…) | Cosmetics are **earned, not bought**; two extra are Pro |
+| **Celebrations** 🎉 | Every rescue or donation pops veggie confetti, XP, level-ups and new badges, with haptics | Diffed before/after each action, so any new action gets it for free |
+| **Talk to Sprout** 💬 | Tap it: it jumps and tells you something you can act on now ("the spinach expires tomorrow…") | Always actionable, never trivia-only |
+| **Reminders** 🔔 | A local notification the evening before perishables expire, in Sprout's voice | One per day, grouped; rescheduled whenever the fridge changes |
+| **Gentle consequences** 🥀 | Binning food shows the streak it ended, and Sprout wilts until your next rescue | No guilt trips, just a visible reason to do better next time |
+
 ## Monetization
 
 Built on RevenueCat: one `pro` entitlement, one offering (monthly and annual), and **RevenueCat's own Paywall component, configured remotely from the dashboard**. No prices or paywall copy are hard-coded in the app.
@@ -143,7 +158,17 @@ npm run build:dev        # cloud build → installable APK
 npx expo start           # then open the dev build on the phone
 ```
 
-Or build locally with Android Studio installed: `npm run android`.
+**Run on an Android emulator (local build).** Needs the Android SDK and JDK 17. Android Studio provides both; or install just the SDK command-line tools plus a JDK.
+
+```bash
+# once: create an emulator (API 36, Pixel)
+avdmanager create avd -n Pixel_API_36 -k "system-images;android-36;google_apis;x86_64" -d pixel_7
+emulator -avd Pixel_API_36 &
+# build, install and launch the dev build on it
+npm run android
+```
+
+Requires `ANDROID_HOME` (e.g. `%LOCALAPPDATA%AndroidSdk`) and `JAVA_HOME` pointing at JDK 17.
 
 **Environment variables** (`.env`, never committed):
 
