@@ -9,7 +9,7 @@ import { PixelGrid } from '@/components/pixel-grid';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { ACCESSORIES } from '@/lib/rules/progress';
-import { useGame } from '@/store/game';
+import { useGame, useSproutName } from '@/store/game';
 import { useItems } from '@/store/items';
 
 const CONFETTI = ['🥕', '🍅', '🥦', '🍋', '🫑', '🍞', '🧀', '✨', '💚', '🌱'];
@@ -86,6 +86,7 @@ export function CelebrationOverlay() {
   const toggleAccessory = useGame((s) => s.toggleAccessory);
   const equipped = useGame((s) => s.equipped);
   const restore = useItems((s) => s.restore);
+  const name = useSproutName();
 
   if (!moment) return null;
 
@@ -122,7 +123,7 @@ export function CelebrationOverlay() {
             <>
               <PixelGrid grid={buildAccessory(moment.id)} palette={palette('content')} pixel={8} />
               <ThemedText type="mono" style={styles.center}>
-                sprout put on the {ACCESSORIES[moment.id].name.toLowerCase()}.
+                {name} put on the {ACCESSORIES[moment.id].name.toLowerCase()}.
               </ThemedText>
               <Button label="looks good" onPress={dismiss} style={styles.cta} />
             </>
@@ -136,7 +137,7 @@ export function CelebrationOverlay() {
               )}
               {win.levelUp && (
                 <ThemedText type="mono" style={styles.center}>
-                  sprout grew into a{' '}
+                  {name} grew into a{' '}
                   <ThemedText type="mono" style={{ fontWeight: 700 }}>
                     {win.levelUp.name.toLowerCase()}
                   </ThemedText>

@@ -78,5 +78,5 @@ export default function AdminScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, gap: 12 },
-  input: { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
+  input: { borderRadius: 6, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
 });

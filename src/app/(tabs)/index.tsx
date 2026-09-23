@@ -17,7 +17,7 @@ import { awaitingAnswer, currentChallenge, growth, totalXp, wasteFreeStreak } fr
 import { countUnits, estimateMeals, findDonationCandidates } from '@/lib/rules/surplus';
 import { canFreeze, findRescueCandidates, sortByUrgency } from '@/lib/rules/urgency';
 import type { Item } from '@/lib/types';
-import { useGame, useSeedBalance, withCelebration, withWasteNudge } from '@/store/game';
+import { useGame, useSeedBalance, useSproutName, withCelebration, withWasteNudge } from '@/store/game';
 import { useItems } from '@/store/items';
 
 /** Deadpan, lowercase, one line — the app's voice. */
@@ -123,6 +123,7 @@ function Header({ items, now }: { items: Item[]; now: Date }) {
   const equipped = useGame((s) => s.equipped);
   const startedAt = useItems((s) => s.startedAt);
   const seeds = useSeedBalance();
+  const name = useSproutName();
   const [bubble, setBubble] = useState<string | null>(null);
 
   const mood = creatureMood(items, now);
@@ -140,7 +141,7 @@ function Header({ items, now }: { items: Item[]; now: Date }) {
         <Creature mood={mood} level={g.stage.level} equipped={equipped} onPress={say} size="small" />
         <Pressable style={styles.headerInfo} onPress={() => router.push('/sprout')} accessibilityRole="button" accessibilityHint="Opens Sprout">
           <ThemedText type="mono" style={{ fontWeight: 700 }}>
-            {STATUS[mood]}
+            {STATUS[mood].replace('sprout', name)}
           </ThemedText>
           <ThemedText type="mono" themeColor="textSecondary" style={styles.tiny}>
             lv {g.stage.level} {g.stage.name.toLowerCase()} · {g.next ? `${g.xp}/${g.next.minXp} xp` : `${g.xp} xp`}

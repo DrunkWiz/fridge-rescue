@@ -31,7 +31,7 @@ type Step = 'box' | 'where' | 'confirm';
 function Headline({ units }: { units: number }) {
   const theme = useTheme();
   return (
-    <View style={[styles.headline, { backgroundColor: theme.backgroundElement }]}>
+    <View style={[styles.headline, { borderColor: theme.border }]}>
       <ThemedText type="subtitle" style={{ color: theme.tint, fontSize: 28, lineHeight: 34 }}>
         ≈ {estimateMeals(units)} meals
       </ThemedText>
@@ -155,7 +155,7 @@ function WhereStep({ onPick }: { onPick: (dropOff: DropOff | { name: string }) =
       )}
 
       {results.map((d) => (
-        <Pressable key={d.id} onPress={() => onPick(d)} style={[styles.dropOff, { backgroundColor: theme.backgroundElement }]}>
+        <Pressable key={d.id} onPress={() => onPick(d)} style={[styles.dropOff, { borderColor: theme.border }]}>
           <View style={{ flex: 1 }}>
             <ThemedText>{d.name}</ThemedText>
             {d.address && (
@@ -197,7 +197,7 @@ function ConfirmStep({ dropOff, units, onConfirm }: { dropOff: DropOff | { name:
   const place = 'location' in dropOff ? dropOff : null;
   return (
     <>
-      <View style={[styles.headline, { backgroundColor: theme.backgroundElement }]}>
+      <View style={[styles.headline, { borderColor: theme.border }]}>
         <ThemedText style={{ textAlign: 'center' }}>Take your box of</ThemedText>
         <ThemedText type="subtitle" style={{ color: theme.tint, fontSize: 28, lineHeight: 34 }}>
           {units} item{units === 1 ? '' : 's'} · ≈ {estimateMeals(units)} meals
@@ -298,10 +298,10 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, gap: 10 },
   empty: { justifyContent: 'center', padding: 32 },
-  headline: { borderRadius: 18, padding: 18, alignItems: 'center', gap: 6 },
+  headline: { borderWidth: 1.5, borderRadius: 6, padding: 18, alignItems: 'center', gap: 6 },
   cta: { marginTop: 8 },
   searchRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  input: { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
-  dropOff: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, padding: 14 },
+  input: { borderRadius: 6, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
+  dropOff: { borderWidth: 1.5, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 6, padding: 14 },
   custom: { gap: 8, marginTop: 8 },
 });

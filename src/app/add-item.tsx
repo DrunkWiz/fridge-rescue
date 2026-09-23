@@ -122,9 +122,9 @@ export default function AddItemScreen() {
               <Pressable
                 key={key}
                 onPress={() => pickCategory(key)}
-                style={[styles.chip, { backgroundColor: selected ? theme.tint : theme.backgroundElement }]}>
-                <ThemedText type="small" style={selected ? { color: theme.onTint } : undefined}>
-                  {CATEGORIES[key].label}
+                style={[styles.chip, { borderColor: selected ? theme.text : theme.backgroundSelected, backgroundColor: selected ? theme.text : 'transparent' }]}>
+                <ThemedText type="mono" style={[{ fontSize: 13 }, selected && { color: theme.background }]}>
+                  {CATEGORIES[key].label.toLowerCase()}
                 </ThemedText>
               </Pressable>
             );
@@ -172,12 +172,12 @@ export default function AddItemScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, gap: 12 },
-  input: { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
+  input: { borderRadius: 6, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  chip: { borderRadius: 4, borderWidth: 1.5, paddingHorizontal: 10, paddingVertical: 5 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  stepButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  stepButton: { width: 36, height: 36, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
   stepValue: { minWidth: 36, textAlign: 'center' },
   save: { marginTop: 16 },
   limit: { marginTop: 16, gap: 10 },

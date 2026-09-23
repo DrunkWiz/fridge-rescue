@@ -53,7 +53,8 @@
     "lint": "expo lint",
     "test": "node --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
-    "build:dev": "npx eas-cli@latest build --profile development --platform android"
+    "build:dev": "npx eas-cli@latest build --profile development --platform android",
+    "icons": "node scripts/generate-icons.ts"
   },
   "private": true
 }

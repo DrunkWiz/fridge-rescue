@@ -74,8 +74,8 @@ export function BarcodeScanner({ visible, onClose, onScanned }: { visible: boole
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16, gap: 12 },
   title: { textAlign: 'center', fontSize: 18 },
-  cameraBox: { flex: 1, borderRadius: 20, overflow: 'hidden', justifyContent: 'center' },
+  cameraBox: { flex: 1, borderRadius: 6, overflow: 'hidden', justifyContent: 'center' },
   permission: { padding: 24, gap: 12, alignItems: 'stretch' },
   manual: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  input: { flex: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
+  input: { flex: 1, borderRadius: 6, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
 });

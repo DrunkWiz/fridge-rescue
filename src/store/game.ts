@@ -38,6 +38,11 @@ type GameState = {
   toggleAccessory: (id: AccessoryId) => void;
   /** Silent, automatic: the first time the fridge is looked at each day. */
   checkIn: () => void;
+  /** Seen the first-launch intro. */
+  onboarded: boolean;
+  /** What the user called their pet; empty means "sprout". */
+  sproutName: string;
+  finishOnboarding: (name: string) => void;
   /** Month keys (YYYY-MM), one per photo scan — for the free monthly allowance. */
   scans: string[];
   recordScan: () => void;
@@ -55,6 +60,9 @@ export const useGame = create<GameState>()(
       checkIns: [],
       bought: [],
       scans: [],
+      onboarded: false,
+      sproutName: '',
+      finishOnboarding: (name) => set({ onboarded: true, sproutName: name.trim().slice(0, 16) }),
       checkIn: () =>
         set((s) => {
           const today = dayKey(new Date());
@@ -81,7 +89,14 @@ export const useGame = create<GameState>()(
     {
       name: STORAGE_KEYS.game,
       storage: persistStorage,
-      partialize: (s) => ({ equipped: s.equipped, checkIns: s.checkIns, bought: s.bought, scans: s.scans }),
+      partialize: (s) => ({
+        equipped: s.equipped,
+        checkIns: s.checkIns,
+        bought: s.bought,
+        scans: s.scans,
+        onboarded: s.onboarded,
+        sproutName: s.sproutName,
+      }),
     },
   ),
 );
@@ -131,8 +146,17 @@ export function withCelebration(action: () => void, label: string) {
 export function withWasteNudge(action: () => void, label: string) {
   const previous = useItems.getState().items;
   action();
-  useGame.getState().showMoment({ kind: 'toast', text: `${label} · sprout is a bit sad`, undo: previous });
+  useGame.getState().showMoment({ kind: 'toast', text: `${label} · ${sproutName()} is a bit sad`, undo: previous });
   haptic('warning');
+}
+
+/** The pet's display name (lowercase, like the rest of the app's voice). */
+export function sproutName(): string {
+  return (useGame.getState().sproutName || 'sprout').toLowerCase();
+}
+
+export function useSproutName(): string {
+  return (useGame((s) => s.sproutName) || 'sprout').toLowerCase();
 }
 
 /** Monthly photo scans free users get; Pro is unlimited. */

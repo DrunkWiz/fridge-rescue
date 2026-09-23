@@ -25,7 +25,7 @@ function whenLabel(days: number): string {
 function RecipeCard({ recipe }: { recipe: Recipe }) {
   const theme = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
+    <View style={[styles.card, { borderColor: theme.border }]}>
       <ThemedText type="subtitle" style={styles.recipeTitle}>
         {recipe.title}
       </ThemedText>
@@ -101,7 +101,8 @@ export default function RescueScreen() {
       // Leftovers are the food most often forgotten, so track them straight away.
       if (leftovers && recipe) {
         addItem({
-          name: `Leftovers: ${recipe.title.toLowerCase()}`,
+          // "Rescue skillet: greek yoghurt, …" → "Leftovers: rescue skillet"
+          name: `Leftovers: ${recipe.title.split(':')[0].trim().toLowerCase()}`.slice(0, 40),
           category: 'leftovers',
           quantity: 1,
           expiresAt: addDays(new Date(), CATEGORIES.leftovers.defaultShelfLifeDays).toISOString(),
@@ -178,8 +179,8 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 10 },
   empty: { justifyContent: 'center', padding: 32 },
   cta: { marginTop: 8 },
-  card: { borderRadius: 18, padding: 18, gap: 4, marginTop: 8 },
-  recipeTitle: { fontSize: 24, lineHeight: 30 },
+  card: { borderWidth: 1.5, borderRadius: 6, padding: 18, gap: 4, marginTop: 8 },
+  recipeTitle: { fontSize: 20, lineHeight: 26 },
   section: { marginTop: 12, marginBottom: 2 },
   step: { flexDirection: 'row', gap: 10, marginBottom: 4 },
   leftovers: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },

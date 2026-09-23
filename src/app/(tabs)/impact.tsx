@@ -100,7 +100,7 @@ export default function ImpactScreen() {
         ) : (
           <>
             {history.map((m) => (
-              <View key={m.month} style={[styles.month, { backgroundColor: theme.backgroundElement }]}>
+              <View key={m.month} style={[styles.month, { borderColor: theme.border }]}>
                 <ThemedText type="smallBold">{monthLabel(m.month)}</ThemedText>
                 <ThemedText type="small">
                   🍳 {unitsToMeals(m.rescued)} meals rescued · 📦 {unitsToMeals(m.donated)} meals donated
@@ -130,6 +130,6 @@ const styles = StyleSheet.create({
   counters: { flexDirection: 'row', alignSelf: 'stretch' },
   counter: { flex: 1, alignItems: 'center' },
   heading: { marginTop: 12 },
-  locked: { borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 16, padding: 18, gap: 12 },
-  month: { borderRadius: 14, padding: 14, gap: 4 },
+  locked: { borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 6, padding: 18, gap: 12 },
+  month: { borderWidth: 1.5, borderRadius: 6, padding: 14, gap: 4 },
 });

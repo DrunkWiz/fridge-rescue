@@ -24,7 +24,7 @@ export function CheckRow({
       onPress={onToggle}
       accessibilityRole="checkbox"
       accessibilityState={{ checked }}
-      style={[styles.row, { backgroundColor: theme.backgroundElement }]}>
+      style={[styles.row, { borderColor: theme.border }]}>
       <View style={[styles.box, { borderColor: checked ? theme.tint : theme.textSecondary, backgroundColor: checked ? theme.tint : 'transparent' }]}>
         {checked && <ThemedText style={{ color: theme.onTint, fontSize: 14, lineHeight: 16 }}>✓</ThemedText>}
       </View>
@@ -42,7 +42,7 @@ export function CheckRow({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 },
+  row: { borderWidth: 1.5, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 6, paddingHorizontal: 14, paddingVertical: 12 },
   box: { width: 24, height: 24, borderRadius: 7, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   main: { flex: 1 },
 });

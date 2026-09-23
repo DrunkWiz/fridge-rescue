@@ -38,7 +38,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: 500,
   },
+  // Labels, headings and big numbers use the typewriter voice; body text stays sans for readability.
   smallBold: {
+    fontFamily: Fonts.mono,
     fontSize: 14,
     lineHeight: 20,
     fontWeight: 700,
@@ -49,11 +51,13 @@ const styles = StyleSheet.create({
     fontWeight: 500,
   },
   title: {
+    fontFamily: Fonts.mono,
     fontSize: 48,
     fontWeight: 600,
     lineHeight: 52,
   },
   subtitle: {
+    fontFamily: Fonts.mono,
     fontSize: 32,
     lineHeight: 44,
     fontWeight: 600,

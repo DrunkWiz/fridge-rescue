@@ -20,12 +20,13 @@ export default function RootLayout() {
     initPurchases();
   }, []);
 
-  // Keep expiry reminders in sync with the fridge. Permission is asked once there's something to remind about.
+  // Keep expiry reminders in sync with the fridge. Permission is asked after the first save —
+  // once the user has felt the loop, "remind me before food goes off" is an easy yes.
   const items = useItems((s) => s.items);
-  const hasItems = items.length > 0;
+  const hasSaved = items.some((i) => i.status === 'used' || i.status === 'donated' || i.frozenAt);
   useEffect(() => {
-    if (hasItems) ensureNotificationPermission();
-  }, [hasItems]);
+    if (hasSaved) ensureNotificationPermission();
+  }, [hasSaved]);
   useEffect(() => {
     rescheduleExpiryReminders(items).catch((error) => console.warn('Could not schedule reminders', error));
   }, [items]);
@@ -40,12 +41,13 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerTitleStyle: { fontFamily: Fonts.mono }, headerShadowVisible: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="add-item" options={{ title: 'Add item', presentation: 'modal' }} />
+        <Stack.Screen name="welcome" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen name="add-item" options={{ title: 'add item', presentation: 'modal' }} />
         <Stack.Screen name="scan" options={{ title: 'scan receipt', presentation: 'modal' }} />
-        <Stack.Screen name="rescue" options={{ title: 'Rescue' }} />
-        <Stack.Screen name="donate" options={{ title: 'Donation box' }} />
+        <Stack.Screen name="rescue" options={{ title: 'rescue' }} />
+        <Stack.Screen name="donate" options={{ title: 'donation box' }} />
         <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="admin" options={{ title: 'Admin', presentation: 'modal' }} />
+        <Stack.Screen name="admin" options={{ title: 'admin', presentation: 'modal' }} />
       </Stack>
       {/* Celebrations can be triggered from any screen, so they live above the navigator. */}
       <CelebrationOverlay />
