@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 
 import type { Item } from '../types.ts';
 import { addDays } from './dates.ts';
-import { checkShoppingList, guessCategory, itemsFromList, parseList } from './lists.ts';
+import { checkShoppingList, formatShareList, guessCategory, itemsFromList, matchingItems, parseList } from './lists.ts';
 
 const NOW = new Date(2026, 8, 23, 12);
 
@@ -62,5 +62,23 @@ describe('paste to add', () => {
     assert.equal(bread.category, 'bakery');
     assert.ok(bread.daysUntilExpiry > 0);
     assert.equal(itemsFromList('3 tins of black beans')[0].name, 'Black beans');
+  });
+});
+
+describe('sharing a list', () => {
+  it('round-trips through the family chat', () => {
+    const lines = [
+      { name: 'semi skimmed milk', quantity: 2 },
+      { name: 'eggs', quantity: 1 },
+    ];
+    const text = formatShareList(lines);
+    assert.match(text, /^Shopping list:\n- 2 × semi skimmed milk\n- eggs/);
+    assert.deepEqual(parseList(text), lines);
+  });
+
+  it('finds matching fridge items for a list entry', () => {
+    const items = [item('Chickpeas', 5), item('Milk', 1, 5, 'used')];
+    assert.equal(matchingItems('tins of chickpeas', items).length, 1);
+    assert.equal(matchingItems('milk', items).length, 0);
   });
 });

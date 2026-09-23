@@ -47,7 +47,7 @@ export default function RootLayout() {
         <Stack.Screen name="add-item" options={{ title: 'add item', presentation: 'modal' }} />
         <Stack.Screen name="scan" options={{ title: 'scan receipt', presentation: 'modal' }} />
         <Stack.Screen name="paste" options={{ title: 'paste a list', presentation: 'modal' }} />
-        <Stack.Screen name="shopping" options={{ title: 'before you shop' }} />
+        <Stack.Screen name="shopping" options={{ title: 'shopping list' }} />
         <Stack.Screen name="rescue" options={{ title: 'rescue' }} />
         <Stack.Screen name="donate" options={{ title: 'donation box' }} />
         <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />

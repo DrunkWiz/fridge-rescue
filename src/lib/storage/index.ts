@@ -12,4 +12,5 @@ export const STORAGE_KEYS = {
   admin: 'fridge-rescue/admin',
   game: 'fridge-rescue/game',
   diary: 'fridge-rescue/diary',
+  shopping: 'fridge-rescue/shopping',
 } as const;

@@ -80,7 +80,8 @@ Home opens on **what needs doing today**: food past its date ("did you eat it?")
 
 ### Stopping waste before it starts
 
-- **Before you shop**: paste your shopping list and the app flags what's already at home ("chickpeas: you already have 5, 17 months left"). Surplus is cheapest to prevent at the shop.
+- **Shopping list**: a saved list that flags what's already at home ("chickpeas: you already have 5, 17 months left"). Surplus is cheapest to prevent at the shop. Add from any fridge item with "+ list" when it runs out; tick an entry when you buy it and it goes straight into the fridge with a guessed date (with undo).
+- **Share with family**: sends the list to your family chat as plain text. When someone sends one back, paste it in and the header and footer lines are skipped. No accounts or server needed.
 - **Type or paste to add**: "2 x milk, eggs x6, 3 tins black beans" or an online order becomes a reviewable list with categories and dates guessed. No AI or network needed ([`lists.ts`](src/lib/rules/lists.ts)).
 - **Partial use**: "ate 1" on multi-packs, so the fridge matches reality.
 

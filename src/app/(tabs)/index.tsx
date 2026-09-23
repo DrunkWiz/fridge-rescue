@@ -19,6 +19,7 @@ import { canFreeze, findRescueCandidates, sortByUrgency } from '@/lib/rules/urge
 import type { Item } from '@/lib/types';
 import { useGame, useSeedBalance, useSproutName, withCelebration, withWasteNudge } from '@/store/game';
 import { useItems } from '@/store/items';
+import { useShopping } from '@/store/shopping';
 
 /** Deadpan, lowercase, one line — the app's voice. */
 const STATUS: Record<CreatureMood, string> = {
@@ -55,6 +56,10 @@ const ateIt = (item: Item) => withCelebration(() => useItems.getState().setStatu
 const binnedIt = (item: Item) => withWasteNudge(() => useItems.getState().setStatus(item.id, 'wasted'), `binned the ${item.name.toLowerCase()}`);
 const ateOne = (item: Item) =>
   withCelebration(() => useItems.getState().useSome(item.id, 1), `ate 1 of the ${item.name.toLowerCase()} · ${item.quantity - 1} left`);
+const toList = (item: Item) => {
+  useShopping.getState().add([{ name: item.name.toLowerCase(), quantity: 1 }]);
+  useGame.getState().showMoment({ kind: 'toast', text: `added ${item.name.toLowerCase()} to the shopping list` });
+};
 const frozeIt = (item: Item) => withCelebration(() => useItems.getState().freeze(item.id), `froze the ${item.name.toLowerCase()} · 60 more days`);
 
 function SmallButton({ label, color, onPress }: { label: string; color: string; onPress: () => void }) {
@@ -83,6 +88,7 @@ function MoreActions({ item, onDone }: { item: Item; onDone: () => void }) {
         color={theme.textSecondary}
         onPress={run(() => useItems.getState().setOpened(item.id, !item.opened))}
       />
+      <SmallButton label="+ list" color={theme.text} onPress={run(() => toList(item))} />
       <SmallButton label="binned it" color={theme.danger} onPress={run(() => binnedIt(item))} />
       <SmallButton label="remove" color={theme.textSecondary} onPress={run(() => useItems.getState().removeItem(item.id))} />
     </View>
@@ -231,6 +237,7 @@ export default function HomeScreen() {
   const items = useItems((s) => s.items);
   const loadDemoData = useItems((s) => s.loadDemoData);
   const checkIn = useGame((s) => s.checkIn);
+  const listCount = useShopping((s) => s.entries.length);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Recomputed per render so day boundaries roll over without a timer.
@@ -291,7 +298,7 @@ export default function HomeScreen() {
                 <ChallengeLine items={items} now={now} />
                 <Pressable onPress={() => router.push('/shopping')} accessibilityRole="button" hitSlop={6}>
                   <ThemedText type="mono" style={[styles.tiny, { color: theme.tint }]}>
-                    🛒 going shopping? check your list first →
+                    🛒 shopping list{listCount ? ` · ${listCount}` : ''} →
                   </ThemedText>
                 </Pressable>
               </>

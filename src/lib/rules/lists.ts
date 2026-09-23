@@ -15,12 +15,18 @@ const PRICE = /\s*[£$€]?\s*\d+[.,]\d{2}\s*$/;
 const LEADING_QTY = /^(\d{1,3})\s*(?:x|×)?\s+(.+)$/i;
 const TRAILING_QTY = /^(.+?)\s*(?:x|×)\s*(\d{1,3})$/i;
 
-/** One line per item; also splits "milk, eggs, spinach". Strips bullets, checkboxes and prices. */
+/** Header and footer lines in shared lists ("Shopping list:", "(from Fridge Rescue)"). */
+const NOT_AN_ITEM = /^(#|\(|.*:\s*$)/;
+
+/**
+ * One line per item; also splits "milk, eggs, spinach". Strips bullets,
+ * checkboxes and prices, and skips headers and footers.
+ */
 export function parseList(text: string): ListLine[] {
   return text
     .split(/[\n,;]+/)
     .map((raw) => raw.replace(BULLET, '').replace(PRICE, '').trim())
-    .filter((line) => line.length > 1)
+    .filter((line) => line.length > 1 && !NOT_AN_ITEM.test(line))
     .map((line) => {
       const lead = line.match(LEADING_QTY);
       if (lead) return { name: lead[2].trim(), quantity: Number(lead[1]) };
@@ -43,7 +49,7 @@ export function normalise(name: string): string {
     .join(' ');
 }
 
-function matches(listName: string, itemName: string): boolean {
+export function matches(listName: string, itemName: string): boolean {
   const a = normalise(listName);
   const b = normalise(itemName);
   if (!a || !b) return false;
@@ -58,6 +64,17 @@ export type ShoppingCheck = {
   /** Soonest expiry among what you have, in days. */
   soonestDays: number | null;
 };
+
+/** Active fridge items matching a shopping-list name. */
+export function matchingItems(name: string, items: Item[]): Item[] {
+  return items.filter((i) => i.status === 'active' && matches(name, i.name));
+}
+
+/** Plain text for the family chat; parseList reads it straight back. */
+export function formatShareList(lines: ListLine[]): string {
+  const body = lines.map((l) => `- ${l.quantity > 1 ? `${l.quantity} × ` : ''}${l.name}`).join('\n');
+  return `Shopping list:\n${body}\n\n(from Fridge Rescue)`;
+}
 
 /** For each line of a shopping list: do you already have it, how much, and when does it expire? */
 export function checkShoppingList(text: string, items: Item[], now: Date): ShoppingCheck[] {

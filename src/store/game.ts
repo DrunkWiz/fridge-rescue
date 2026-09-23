@@ -24,7 +24,7 @@ export type Moment =
   | ({ kind: 'win'; undo?: Item[] } & Celebration)
   | { kind: 'bought'; id: AccessoryId }
   /** Light feedback for everyday actions, with undo. */
-  | { kind: 'toast'; text: string; undo?: Item[] };
+  | { kind: 'toast'; text: string; undo?: Item[]; undoFn?: () => void };
 
 type GameState = {
   /** What Sprout is wearing, one accessory per slot. */

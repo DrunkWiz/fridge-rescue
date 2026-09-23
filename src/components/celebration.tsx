@@ -91,17 +91,19 @@ export function CelebrationOverlay() {
   if (!moment) return null;
 
   if (moment.kind === 'toast') {
-    const undo = moment.undo;
+    const { undo, undoFn } = moment;
     return (
       <Toast
         text={moment.text}
         onDone={dismiss}
         onUndo={
-          undo &&
-          (() => {
-            restore(undo);
-            dismiss();
-          })
+          undo || undoFn
+            ? () => {
+                if (undo) restore(undo);
+                undoFn?.();
+                dismiss();
+              }
+            : undefined
         }
       />
     );
