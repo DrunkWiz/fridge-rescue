@@ -4,6 +4,8 @@ import { describe, it } from 'node:test';
 import type { Item } from '../types.ts';
 import { addDays } from './dates.ts';
 import {
+  challengeSeeds,
+  currentChallenge,
   dailyStars,
   dayKey,
   diffProgress,
@@ -171,5 +173,27 @@ describe('seeds and daily stars', () => {
   it('gives one star for a check-in and two for a day with a save', () => {
     const stars = dailyStars([rescued(0)], [dayKey(addDays(NOW, -1))], NOW, 3).map((d) => d.stars);
     assert.deepEqual(stars, [0, 1, 2]);
+  });
+});
+
+describe('weekly challenges', () => {
+  it('rotates weekly and is the same for everyone', () => {
+    const a = currentChallenge([], NOW).challenge.id;
+    const nextWeek = currentChallenge([], addDays(NOW, 7)).challenge.id;
+    assert.notEqual(a, nextWeek);
+    assert.equal(currentChallenge([], addDays(NOW, 1)).challenge.id, a);
+  });
+
+  it('tracks progress from this week and pays out once complete', () => {
+    const c = currentChallenge([], NOW).challenge;
+    // Build items that satisfy whatever this week's challenge is.
+    const fit = (i: number): Item =>
+      c.id === 'box-it'
+        ? donated(0)
+        : rescued(0, { category: c.id === 'dairy-duo' ? 'dairy' : c.id === 'protein' ? 'meat' : c.id === 'leftover-legend' ? 'leftovers' : 'produce', name: `x${i}` });
+    const items = Array.from({ length: c.goal }, (_, i) => fit(i));
+    assert.equal(currentChallenge(items, NOW).done, true);
+    assert.equal(challengeSeeds(items, NOW, at(-1)), c.reward);
+    assert.equal(challengeSeeds(items, NOW, null), 0);
   });
 });

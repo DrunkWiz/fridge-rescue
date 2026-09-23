@@ -247,17 +247,20 @@ export function dailyStars(items: Item[], checkIns: string[], now: Date, days = 
   });
 }
 
-export type Snapshot = { xp: number; level: number; badges: BadgeId[] };
+export type Snapshot = { xp: number; level: number; badges: BadgeId[]; challengeDone: boolean; challenge: Challenge };
 
 export function snapshot(items: Item[], now: Date, startedAt?: string | null): Snapshot {
   const xp = totalXp(items);
-  return { xp, level: growth(xp).stage.level, badges: earnedBadges(items, now, startedAt) };
+  const { done, challenge } = currentChallenge(items, now);
+  return { xp, level: growth(xp).stage.level, badges: earnedBadges(items, now, startedAt), challengeDone: done, challenge };
 }
 
 export type Celebration = {
   xpGained: number;
   levelUp: Stage | null;
   newBadges: Badge[];
+  /** This week's challenge, if the action just completed it. */
+  challenge: Challenge | null;
 };
 
 /** What just changed, for the celebration after an action. Null if nothing worth celebrating. */
@@ -265,6 +268,65 @@ export function diffProgress(before: Snapshot, after: Snapshot): Celebration | n
   const xpGained = after.xp - before.xp;
   const levelUp = after.level > before.level ? STAGES[after.level - 1] : null;
   const newBadges = BADGES.filter((b) => after.badges.includes(b.id) && !before.badges.includes(b.id));
-  if (xpGained <= 0 && !levelUp && newBadges.length === 0) return null;
-  return { xpGained, levelUp, newBadges };
+  const challenge = after.challengeDone && !before.challengeDone ? after.challenge : null;
+  if (xpGained <= 0 && !levelUp && newBadges.length === 0 && !challenge) return null;
+  return { xpGained, levelUp, newBadges, challenge };
+}
+
+// ── Weekly challenges (a new one every Monday) ──────────────────────────────
+
+export type Challenge = {
+  id: string;
+  title: string;
+  goal: number;
+  reward: number;
+  /** Counts progress from the items resolved within the week. */
+  count: (resolved: Item[]) => number;
+};
+
+const rescuedWhere = (pred: (i: Item) => boolean) => (resolved: Item[]) => resolved.filter((i) => i.status === 'used' && pred(i)).length;
+
+export const CHALLENGES: Challenge[] = [
+  { id: 'dairy-duo', title: 'rescue 2 dairy items', goal: 2, reward: 15, count: rescuedWhere((i) => i.category === 'dairy') },
+  { id: 'veg-hero', title: 'rescue 3 fruit & veg', goal: 3, reward: 15, count: rescuedWhere((i) => i.category === 'produce') },
+  { id: 'box-it', title: 'make a donation', goal: 1, reward: 20, count: (r) => (r.some((i) => i.status === 'donated') ? 1 : 0) },
+  { id: 'clean-plate', title: 'save 5 items', goal: 5, reward: 20, count: (r) => r.filter((i) => i.status === 'used' || i.status === 'donated').length },
+  { id: 'protein', title: 'rescue meat or fish', goal: 1, reward: 10, count: rescuedWhere((i) => i.category === 'meat' || i.category === 'fish') },
+  { id: 'leftover-legend', title: 'eat 2 lots of leftovers', goal: 2, reward: 15, count: rescuedWhere((i) => i.category === 'leftovers') },
+];
+
+/** Whole weeks since a fixed Monday, so every user sees the same challenge each week. */
+function weekIndex(start: Date): number {
+  const epoch = new Date(2026, 0, 5); // a Monday
+  return Math.round((start.getTime() - epoch.getTime()) / (7 * 24 * 60 * 60 * 1000));
+}
+
+function resolvedInWeek(items: Item[], start: Date): Item[] {
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+  return items.filter((i) => i.resolvedAt && new Date(i.resolvedAt) >= start && new Date(i.resolvedAt) < end);
+}
+
+export type ChallengeStatus = { challenge: Challenge; progress: number; done: boolean };
+
+export function challengeFor(weekStartDate: Date): Challenge {
+  const n = CHALLENGES.length;
+  return CHALLENGES[((weekIndex(weekStartDate) % n) + n) % n];
+}
+
+export function currentChallenge(items: Item[], now: Date): ChallengeStatus {
+  const start = weekStart(now);
+  const challenge = challengeFor(start);
+  const progress = Math.min(challenge.goal, challenge.count(resolvedInWeek(items, start)));
+  return { challenge, progress, done: progress >= challenge.goal };
+}
+
+/** Seeds from every completed weekly challenge since the user started. */
+export function challengeSeeds(items: Item[], now: Date, startedAt?: string | null): number {
+  if (!startedAt) return 0;
+  let total = 0;
+  for (let start = weekStart(new Date(startedAt)); start <= now; start = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7)) {
+    const c = challengeFor(start);
+    if (c.count(resolvedInWeek(items, start)) >= c.goal) total += c.reward;
+  }
+  return total;
 }

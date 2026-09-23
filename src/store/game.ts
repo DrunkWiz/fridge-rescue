@@ -5,6 +5,7 @@ import { persist } from 'zustand/middleware';
 
 import {
   ACCESSORIES,
+  challengeSeeds,
   dayKey,
   diffProgress,
   earnedBadges,
@@ -85,7 +86,8 @@ export const useGame = create<GameState>()(
 export function seedBalance(): number {
   const { items, startedAt } = useItems.getState();
   const { checkIns, bought } = useGame.getState();
-  return seedsEarned(items, earnedBadges(items, new Date(), startedAt), checkIns) - seedsSpent(bought);
+  const now = new Date();
+  return seedsEarned(items, earnedBadges(items, now, startedAt), checkIns) + challengeSeeds(items, now, startedAt) - seedsSpent(bought);
 }
 
 export function useSeedBalance(): number {
@@ -93,7 +95,8 @@ export function useSeedBalance(): number {
   const startedAt = useItems((s) => s.startedAt);
   const checkIns = useGame((s) => s.checkIns);
   const bought = useGame((s) => s.bought);
-  return seedsEarned(items, earnedBadges(items, new Date(), startedAt), checkIns) - seedsSpent(bought);
+  const now = new Date();
+  return seedsEarned(items, earnedBadges(items, now, startedAt), checkIns) + challengeSeeds(items, now, startedAt) - seedsSpent(bought);
 }
 
 function haptic(kind: 'success' | 'warning') {

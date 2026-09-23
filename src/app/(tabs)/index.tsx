@@ -14,6 +14,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { creatureMood, lifetimeImpact, type CreatureMood } from '@/lib/rules/creature';
 import { daysUntil } from '@/lib/rules/dates';
 import {
+  currentChallenge,
   dailyStars,
   growth,
   SEEDS_PER_CHECK_IN,
@@ -174,6 +175,33 @@ function FridgeCheck({ items, now }: { items: Item[]; now: Date }) {
   );
 }
 
+/** This week's challenge, with a pixel progress bar. */
+function ChallengeCard({ items, now }: { items: Item[]; now: Date }) {
+  const theme = useTheme();
+  const { challenge, progress, done } = currentChallenge(items, now);
+  return (
+    <View style={[styles.card, { borderColor: done ? theme.tint : theme.border }]}>
+      <View style={styles.between}>
+        <ThemedText type="mono" style={{ fontWeight: 700 }}>
+          {done ? '✓ ' : ''}weekly challenge
+        </ThemedText>
+        <ThemedText type="mono" themeColor="textSecondary">
+          +{challenge.reward} 🌱
+        </ThemedText>
+      </View>
+      <ThemedText type="small">{challenge.title}</ThemedText>
+      <View style={styles.between}>
+        <View style={{ flex: 1 }}>
+          <PixelBar progress={progress / challenge.goal} segments={challenge.goal * 3} color={done ? theme.tint : undefined} />
+        </View>
+        <ThemedText type="mono" style={{ marginLeft: 8 }}>
+          {progress}/{challenge.goal}
+        </ThemedText>
+      </View>
+    </View>
+  );
+}
+
 function Header({ items, now }: { items: Item[]; now: Date }) {
   const theme = useTheme();
   const equipped = useGame((s) => s.equipped);
@@ -235,6 +263,7 @@ function Header({ items, now }: { items: Item[]; now: Date }) {
       </ThemedText>
 
       <FridgeCheck items={items} now={now} />
+      <ChallengeCard items={items} now={now} />
 
       <View style={styles.row}>
         <Pressable onPress={() => router.push('/impact')} style={[styles.card, styles.stat, { borderColor: theme.border }]}>
@@ -319,6 +348,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   list: { paddingHorizontal: 16, gap: 8 },
   header: { alignItems: 'center', paddingTop: 8, paddingBottom: 12, gap: 12 },
+  between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'stretch' },
   xp: { alignSelf: 'stretch', gap: 4 },
   creatureArea: { alignItems: 'center', justifyContent: 'flex-end' },

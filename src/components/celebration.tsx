@@ -109,7 +109,17 @@ export function CelebrationOverlay() {
                   </ThemedText>
                 </View>
               ))}
-              {!win.levelUp && win.newBadges.length === 0 && (
+              {win.challenge && (
+                <View style={[styles.badge, { backgroundColor: theme.backgroundElement }]}>
+                  <ThemedText type="mono" style={{ fontWeight: 700 }}>
+                    ✓ weekly challenge: {win.challenge.title}
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    +{win.challenge.reward} 🌱
+                  </ThemedText>
+                </View>
+              )}
+              {!win.levelUp && win.newBadges.length === 0 && !win.challenge && (
                 <ThemedText style={styles.center}>Nice save. Sprout loved that.</ThemedText>
               )}
               {firstReward && equipped[ACCESSORIES[firstReward].slot] !== firstReward ? (
