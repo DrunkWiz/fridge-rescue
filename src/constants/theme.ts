@@ -8,17 +8,18 @@ import '@/global.css';
 import { Platform } from 'react-native';
 
 export const Colors = {
+  // Ink on paper: near-black on white, one green accent (inspired by 1-bit pixel apps).
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#1B1B1B',
+    background: '#FFFFFF',
+    backgroundElement: '#F5F5F1',
+    backgroundSelected: '#E7E7E1',
+    textSecondary: '#6B6B66',
     tint: '#2F8F5B',
-    onTint: '#ffffff',
+    onTint: '#FFFFFF',
     danger: '#C8423B',
     warning: '#C98A12',
-    border: '#E0E1E6',
+    border: '#1B1B1B',
   },
   dark: {
     text: '#ffffff',
@@ -30,7 +31,7 @@ export const Colors = {
     onTint: '#062814',
     danger: '#F2766E',
     warning: '#F0B64A',
-    border: '#2E3135',
+    border: '#EDEDE8',
   },
 } as const;
 

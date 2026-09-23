@@ -3,18 +3,41 @@ import { Platform } from 'react-native';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { diffProgress, snapshot, type AccessoryId, type Celebration, type Slot, ACCESSORIES } from '@/lib/rules/progress';
+import {
+  ACCESSORIES,
+  dayKey,
+  diffProgress,
+  earnedBadges,
+  SEEDS_PER_CHECK_IN,
+  seedsEarned,
+  seedsSpent,
+  snapshot,
+  type AccessoryId,
+  type Celebration,
+  type Slot,
+} from '@/lib/rules/progress';
 import { persistStorage, STORAGE_KEYS } from '@/lib/storage';
 import { useItems } from '@/store/items';
 
-export type Moment = ({ kind: 'win' } & Celebration) | { kind: 'waste'; streakLost: number };
+export type Moment =
+  | ({ kind: 'win' } & Celebration)
+  | { kind: 'waste'; streakLost: number }
+  | { kind: 'check-in'; seeds: number }
+  | { kind: 'bought'; id: AccessoryId };
 
 type GameState = {
   /** What Sprout is wearing, one accessory per slot. */
   equipped: Partial<Record<Slot, AccessoryId>>;
   /** The celebration (or gentle nudge) to show next; not persisted. */
   moment: Moment | null;
+  /** Days (YYYY-MM-DD) the user did their fridge check. */
+  checkIns: string[];
+  /** Accessories bought in the shop with seeds. */
+  bought: AccessoryId[];
   toggleAccessory: (id: AccessoryId) => void;
+  checkIn: () => void;
+  /** Returns false if the user can't afford it. */
+  buy: (id: AccessoryId) => boolean;
   showMoment: (moment: Moment) => void;
   dismissMoment: () => void;
 };
@@ -24,6 +47,24 @@ export const useGame = create<GameState>()(
     (set) => ({
       equipped: {},
       moment: null,
+      checkIns: [],
+      bought: [],
+      checkIn: () =>
+        set((s) => {
+          const today = dayKey(new Date());
+          if (s.checkIns.includes(today)) return s;
+          haptic('success');
+          return { checkIns: [...s.checkIns, today], moment: { kind: 'check-in', seeds: SEEDS_PER_CHECK_IN } };
+        }),
+      buy: (id) => {
+        const s = useGame.getState();
+        const price = ACCESSORIES[id].price;
+        if (price === undefined || s.bought.includes(id) || seedBalance() < price) return false;
+        const slot = ACCESSORIES[id].slot;
+        set({ bought: [...s.bought, id], equipped: { ...s.equipped, [slot]: id }, moment: { kind: 'bought', id } });
+        haptic('success');
+        return true;
+      },
       toggleAccessory: (id) =>
         set((s) => {
           const slot = ACCESSORIES[id].slot;
@@ -32,9 +73,28 @@ export const useGame = create<GameState>()(
       showMoment: (moment) => set({ moment }),
       dismissMoment: () => set({ moment: null }),
     }),
-    { name: STORAGE_KEYS.game, storage: persistStorage, partialize: (s) => ({ equipped: s.equipped }) },
+    {
+      name: STORAGE_KEYS.game,
+      storage: persistStorage,
+      partialize: (s) => ({ equipped: s.equipped, checkIns: s.checkIns, bought: s.bought }),
+    },
   ),
 );
+
+/** Seeds earned minus spent. Earned is derived from the fridge, so it can't drift. */
+export function seedBalance(): number {
+  const { items, startedAt } = useItems.getState();
+  const { checkIns, bought } = useGame.getState();
+  return seedsEarned(items, earnedBadges(items, new Date(), startedAt), checkIns) - seedsSpent(bought);
+}
+
+export function useSeedBalance(): number {
+  const items = useItems((s) => s.items);
+  const startedAt = useItems((s) => s.startedAt);
+  const checkIns = useGame((s) => s.checkIns);
+  const bought = useGame((s) => s.bought);
+  return seedsEarned(items, earnedBadges(items, new Date(), startedAt), checkIns) - seedsSpent(bought);
+}
 
 function haptic(kind: 'success' | 'warning') {
   if (Platform.OS === 'web') return;

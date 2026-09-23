@@ -30,7 +30,7 @@ export function ItemRow({ item, now, onPress }: { item: Item; now: Date; onPress
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.row, { backgroundColor: theme.backgroundElement, opacity: pressed ? 0.7 : 1 }]}>
+      style={({ pressed }) => [styles.row, { borderColor: theme.border, backgroundColor: theme.background, opacity: pressed ? 0.7 : 1 }]}>
       <View style={[styles.stripe, { backgroundColor: accent[urgency] }]} />
       <View style={styles.main}>
         <ThemedText numberOfLines={1}>
@@ -42,7 +42,7 @@ export function ItemRow({ item, now, onPress }: { item: Item; now: Date; onPress
           {item.opened ? ' · opened' : ''}
         </ThemedText>
       </View>
-      <ThemedText type="smallBold" style={{ color: accent[urgency] }}>
+      <ThemedText type="mono" style={{ color: accent[urgency], fontWeight: 700 }}>
         {expiryLabel(daysUntil(item.expiresAt, now))}
       </ThemedText>
     </Pressable>
@@ -50,7 +50,7 @@ export function ItemRow({ item, now, onPress }: { item: Item; now: Date; onPress
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, overflow: 'hidden', gap: 12, paddingRight: 14 },
-  stripe: { width: 5, alignSelf: 'stretch' },
+  row: { flexDirection: 'row', alignItems: 'center', borderRadius: 6, borderWidth: 1.5, overflow: 'hidden', gap: 12, paddingRight: 12 },
+  stripe: { width: 6, alignSelf: 'stretch' },
   main: { flex: 1, paddingVertical: 12 },
 });

@@ -5,6 +5,8 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withTimi
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
+import { buildAccessory, palette } from '@/components/creature/sprites';
+import { PixelGrid } from '@/components/pixel-grid';
 import { ACCESSORIES } from '@/lib/rules/progress';
 import { useGame } from '@/store/game';
 
@@ -58,18 +60,40 @@ export function CelebrationOverlay() {
 
   const win = moment.kind === 'win' ? moment : null;
   const firstReward = win?.newBadges[0]?.reward;
+  const small = moment.kind === 'check-in' || moment.kind === 'bought';
 
   return (
     <Modal transparent visible animationType="fade" onRequestClose={dismiss}>
       <Pressable style={styles.backdrop} onPress={dismiss}>
-        {win && <Confetti />}
-        <Animated.View entering={ZoomIn.springify().damping(12)} style={[styles.card, { backgroundColor: theme.background }]}>
-          {win ? (
+        {(win || moment.kind === 'bought') && <Confetti />}
+        <Animated.View
+          entering={ZoomIn.springify().damping(12)}
+          style={[styles.card, { backgroundColor: theme.background, borderColor: theme.border }, small && styles.smallCard]}>
+          {moment.kind === 'check-in' ? (
+            <>
+              <Text style={styles.bigEmoji}>⭐</Text>
+              <ThemedText type="mono" style={styles.center}>
+                fridge checked. +{moment.seeds} 🌱
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
+                rescue something today to turn it into a 🌟
+              </ThemedText>
+              <Button label="ok" onPress={dismiss} style={styles.cta} />
+            </>
+          ) : moment.kind === 'bought' ? (
+            <>
+              <PixelGrid grid={buildAccessory(moment.id)} palette={palette('content')} pixel={8} />
+              <ThemedText type="mono" style={styles.center}>
+                sprout put on the {ACCESSORIES[moment.id].name.toLowerCase()}.
+              </ThemedText>
+              <Button label="looks good" onPress={dismiss} style={styles.cta} />
+            </>
+          ) : win ? (
             <>
               <Text style={styles.bigEmoji}>{win.levelUp ? '🌳' : win.newBadges.length ? '🏅' : '💚'}</Text>
               {win.xpGained > 0 && (
-                <ThemedText type="subtitle" style={{ color: theme.tint }}>
-                  +{win.xpGained} XP
+                <ThemedText type="monoLarge" style={{ color: theme.tint }}>
+                  +{win.xpGained} xp
                 </ThemedText>
               )}
               {win.levelUp && (
@@ -124,7 +148,8 @@ export function CelebrationOverlay() {
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  card: { width: '100%', maxWidth: 360, borderRadius: 24, padding: 24, alignItems: 'center', gap: 10 },
+  card: { width: '100%', maxWidth: 360, borderRadius: 8, borderWidth: 2, padding: 24, alignItems: 'center', gap: 10 },
+  smallCard: { maxWidth: 300 },
   bigEmoji: { fontSize: 56 },
   center: { textAlign: 'center' },
   badge: { alignSelf: 'stretch', borderRadius: 14, padding: 12, gap: 2 },

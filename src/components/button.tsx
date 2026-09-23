@@ -30,7 +30,7 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
       {loading ? (
         <ActivityIndicator color={primary ? theme.onTint : theme.tint} />
       ) : (
-        <ThemedText type="smallBold" style={{ fontSize: 16, color: primary ? theme.onTint : theme.tint }}>
+        <ThemedText type="mono" style={{ fontSize: 16, fontWeight: 700, color: primary ? theme.onTint : theme.tint }}>
           {label}
         </ThemedText>
       )}
@@ -39,5 +39,5 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
 }
 
 const styles = StyleSheet.create({
-  base: { borderRadius: 999, paddingVertical: 14, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center', minHeight: 50 },
+  base: { borderRadius: 6, paddingVertical: 14, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center', minHeight: 50 },
 });

@@ -4,7 +4,7 @@ import { Fonts, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
-  type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
+  type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code' | 'mono' | 'monoLarge';
   themeColor?: ThemeColor;
 };
 
@@ -23,6 +23,8 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
         type === 'link' && styles.link,
         type === 'linkPrimary' && styles.linkPrimary,
         type === 'code' && styles.code,
+        type === 'mono' && styles.mono,
+        type === 'monoLarge' && styles.monoLarge,
         style,
       ]}
       {...rest}
@@ -64,6 +66,18 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     fontSize: 14,
     color: '#3c87f7',
+  },
+  /** Typewriter voice: numbers, status lines, labels. */
+  mono: {
+    fontFamily: Fonts.mono,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  monoLarge: {
+    fontFamily: Fonts.mono,
+    fontSize: 26,
+    lineHeight: 32,
+    fontWeight: 700,
   },
   code: {
     fontFamily: Fonts.mono,

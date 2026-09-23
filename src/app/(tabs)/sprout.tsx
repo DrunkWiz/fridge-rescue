@@ -3,6 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Creature } from '@/components/creature/creature';
+import { buildAccessory, palette } from '@/components/creature/sprites';
+import { PixelGrid } from '@/components/pixel-grid';
 import { ProgressBar } from '@/components/progress-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -28,6 +30,8 @@ import {
 import { useGame } from '@/store/game';
 import { useItems } from '@/store/items';
 
+const ACCESSORY_PALETTE = palette('content');
+
 function Stat({ value, label }: { value: string; label: string }) {
   const theme = useTheme();
   return (
@@ -49,17 +53,19 @@ export default function SproutScreen() {
   const startedAt = useItems((s) => s.startedAt);
   const equipped = useGame((s) => s.equipped);
   const toggleAccessory = useGame((s) => s.toggleAccessory);
+  const bought = useGame((s) => s.bought);
   const isPro = useIsPro();
 
   const now = new Date();
   const g = growth(totalXp(items));
   const badges = earnedBadges(items, now, startedAt);
-  const unlocked = unlockedAccessories(badges, isPro);
+  const unlocked = unlockedAccessories(badges, isPro, bought);
   const saves = savesThisWeek(items, now);
 
   const wear = (id: AccessoryId) => {
     if (unlocked.includes(id)) toggleAccessory(id);
     else if (ACCESSORIES[id].proOnly) router.push('/paywall');
+    else if (ACCESSORIES[id].price !== undefined) router.push('/shop');
   };
 
   return (
@@ -140,9 +146,11 @@ export default function SproutScreen() {
                   styles.accessory,
                   { backgroundColor: theme.backgroundElement, borderColor: wearing ? theme.tint : 'transparent', opacity: has ? 1 : 0.4 },
                 ]}>
-                <Text style={styles.accessoryEmoji}>{a.emoji}</Text>
-                <ThemedText type="small" style={styles.center}>
-                  {has ? a.name : a.proOnly ? 'Pro' : '🔒'}
+                <View style={styles.accessoryArt}>
+                  <PixelGrid grid={buildAccessory(a.id)} palette={ACCESSORY_PALETTE} pixel={4} />
+                </View>
+                <ThemedText type="mono" style={[styles.center, { fontSize: 11 }]} numberOfLines={1}>
+                  {has ? a.name.toLowerCase() : a.proOnly ? 'pro' : a.price !== undefined ? `🌱${a.price}` : '🔒'}
                 </ThemedText>
               </Pressable>
             );
@@ -167,6 +175,6 @@ const styles = StyleSheet.create({
   badge: { width: '48.5%', borderRadius: 14, padding: 12, alignItems: 'center', gap: 2 },
   badgeEmoji: { fontSize: 28 },
   wardrobe: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  accessory: { width: '18.5%', aspectRatio: 0.9, borderRadius: 14, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  accessoryEmoji: { fontSize: 28 },
+  accessory: { width: '18.5%', minWidth: 58, paddingVertical: 8, borderRadius: 6, borderWidth: 2, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  accessoryArt: { height: 40, justifyContent: 'center' },
 });

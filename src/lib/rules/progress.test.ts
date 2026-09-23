@@ -4,10 +4,14 @@ import { describe, it } from 'node:test';
 import type { Item } from '../types.ts';
 import { addDays } from './dates.ts';
 import {
+  dailyStars,
+  dayKey,
   diffProgress,
   earnedBadges,
   growth,
   savesThisWeek,
+  seedsEarned,
+  seedsSpent,
   snapshot,
   STAGES,
   totalXp,
@@ -150,5 +154,22 @@ describe('wasteFreeStreak with a start date', () => {
 
   it('still resets on waste after the start date', () => {
     assert.equal(wasteFreeStreak([item({ addedAt: at(-45) }), binned(1)], NOW, at(-5)), 1);
+  });
+});
+
+describe('seeds and daily stars', () => {
+  it('earns seeds from saves, check-ins and badges; spends them in the shop', () => {
+    const items = [rescued(1, { quantity: 2 }), donated(1)];
+    assert.equal(seedsEarned(items, ['first-rescue'], ['2026-09-22', '2026-09-22', '2026-09-23']), 2 * 2 + 5 + 2 + 10);
+    assert.equal(seedsSpent(['heart', 'cap']), 15);
+  });
+
+  it('only counts bought items that are actually for sale', () => {
+    assert.deepEqual(unlockedAccessories([], false, ['heart', 'crown']), ['heart']);
+  });
+
+  it('gives one star for a check-in and two for a day with a save', () => {
+    const stars = dailyStars([rescued(0)], [dayKey(addDays(NOW, -1))], NOW, 3).map((d) => d.stars);
+    assert.deepEqual(stars, [0, 1, 2]);
   });
 });

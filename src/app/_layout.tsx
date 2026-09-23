@@ -3,6 +3,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
+import { CelebrationOverlay } from '@/components/celebration';
+import { Fonts } from '@/constants/theme';
 import { ensureNotificationPermission, rescheduleExpiryReminders } from '@/lib/notifications';
 import { initPurchases } from '@/lib/purchases';
 import { useItems } from '@/store/items';
@@ -34,16 +36,16 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="index" options={{ title: 'Fridge Rescue' }} />
+      <Stack screenOptions={{ headerTitleStyle: { fontFamily: Fonts.mono }, headerShadowVisible: false }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="add-item" options={{ title: 'Add item', presentation: 'modal' }} />
         <Stack.Screen name="rescue" options={{ title: 'Rescue' }} />
         <Stack.Screen name="donate" options={{ title: 'Donation box' }} />
         <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="impact" options={{ title: 'Your impact' }} />
-        <Stack.Screen name="sprout" options={{ title: 'Sprout' }} />
         <Stack.Screen name="admin" options={{ title: 'Admin', presentation: 'modal' }} />
       </Stack>
+      {/* Celebrations can be triggered from any screen, so they live above the navigator. */}
+      <CelebrationOverlay />
     </ThemeProvider>
   );
 }

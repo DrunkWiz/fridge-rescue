@@ -107,10 +107,14 @@ export function weeklyGoalStreak(items: Item[], now: Date): number {
   return streak;
 }
 
-export type AccessoryId = 'cap' | 'scarf' | 'flower' | 'crown' | 'sunglasses' | 'tophat' | 'bow' | 'star' | 'headphones' | 'butterfly';
+export type AccessoryId =
+  | 'cap' | 'scarf' | 'flower' | 'crown' | 'sunglasses' | 'tophat' | 'bow' | 'star'
+  | 'headphones' | 'butterfly'
+  | 'beanie' | 'partyhat' | 'glasses' | 'heart' | 'bandana';
 export type Slot = 'head' | 'face' | 'neck' | 'float';
 
-export type Accessory = { id: AccessoryId; emoji: string; name: string; slot: Slot; proOnly?: boolean };
+/** How you get it: a badge reward, Pro, or bought in the shop with seeds. */
+export type Accessory = { id: AccessoryId; emoji: string; name: string; slot: Slot; proOnly?: boolean; price?: number };
 
 export const ACCESSORIES: Record<AccessoryId, Accessory> = {
   cap: { id: 'cap', emoji: '🧢', name: 'Cap', slot: 'head' },
@@ -123,7 +127,15 @@ export const ACCESSORIES: Record<AccessoryId, Accessory> = {
   star: { id: 'star', emoji: '⭐', name: 'Star', slot: 'float' },
   headphones: { id: 'headphones', emoji: '🎧', name: 'Headphones', slot: 'head', proOnly: true },
   butterfly: { id: 'butterfly', emoji: '🦋', name: 'Butterfly', slot: 'float', proOnly: true },
+  heart: { id: 'heart', emoji: '❤️', name: 'Heart', slot: 'float', price: 15 },
+  beanie: { id: 'beanie', emoji: '🧶', name: 'Beanie', slot: 'head', price: 20 },
+  bandana: { id: 'bandana', emoji: '🟥', name: 'Bandana', slot: 'neck', price: 20 },
+  glasses: { id: 'glasses', emoji: '👓', name: 'Glasses', slot: 'face', price: 25 },
+  partyhat: { id: 'partyhat', emoji: '🥳', name: 'Party hat', slot: 'head', price: 40 },
 };
+
+/** Shop stock, cheapest first. */
+export const SHOP = (Object.values(ACCESSORIES) as Accessory[]).filter((a) => a.price !== undefined).sort((a, b) => a.price! - b.price!);
 
 export type BadgeId =
   | 'first-rescue'
@@ -184,10 +196,55 @@ export function earnedBadges(items: Item[], now: Date, startedAt?: string | null
   return BADGES.filter((b) => b.earned(s)).map((b) => b.id);
 }
 
-export function unlockedAccessories(badges: BadgeId[], isPro: boolean): AccessoryId[] {
+export function unlockedAccessories(badges: BadgeId[], isPro: boolean, bought: AccessoryId[] = []): AccessoryId[] {
   const fromBadges = BADGES.filter((b) => badges.includes(b.id)).map((b) => b.reward);
   const fromPro = isPro ? (Object.values(ACCESSORIES).filter((a) => a.proOnly).map((a) => a.id) as AccessoryId[]) : [];
-  return [...fromBadges, ...fromPro];
+  return [...fromBadges, ...fromPro, ...bought.filter((id) => ACCESSORIES[id].price !== undefined)];
+}
+
+// ── Seeds: the in-game currency (never bought with money) ───────────────────
+
+export const SEEDS_PER_RESCUED_UNIT = 2;
+export const SEEDS_PER_DONATED_UNIT = 5;
+export const SEEDS_PER_CHECK_IN = 1;
+export const SEEDS_PER_BADGE = 10;
+
+/** Local YYYY-MM-DD, the key for daily check-ins. */
+export function dayKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+export function seedsEarned(items: Item[], badges: BadgeId[], checkIns: string[]): number {
+  const units = (status: Item['status']) => items.filter((i) => i.status === status).reduce((n, i) => n + i.quantity, 0);
+  return (
+    units('used') * SEEDS_PER_RESCUED_UNIT +
+    units('donated') * SEEDS_PER_DONATED_UNIT +
+    new Set(checkIns).size * SEEDS_PER_CHECK_IN +
+    badges.length * SEEDS_PER_BADGE
+  );
+}
+
+export function seedsSpent(bought: AccessoryId[]): number {
+  return bought.reduce((n, id) => n + (ACCESSORIES[id].price ?? 0), 0);
+}
+
+// ── Daily stars (one per day, like a habit tracker) ─────────────────────────
+
+/** 0 = nothing, 1 = checked the fridge, 2 = checked in and saved food that day. */
+export type DayStar = { day: string; stars: 0 | 1 | 2 };
+
+export function dailyStars(items: Item[], checkIns: string[], now: Date, days = 7): DayStar[] {
+  const saved = new Set(
+    items.filter((i) => (i.status === 'used' || i.status === 'donated') && i.resolvedAt).map((i) => dayKey(new Date(i.resolvedAt!))),
+  );
+  const checked = new Set(checkIns);
+  return Array.from({ length: days }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (days - 1 - i));
+    const day = dayKey(d);
+    // Saving food counts as checking the fridge.
+    const stars = saved.has(day) ? 2 : checked.has(day) ? 1 : 0;
+    return { day, stars };
+  });
 }
 
 export type Snapshot = { xp: number; level: number; badges: BadgeId[] };
