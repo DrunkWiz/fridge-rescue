@@ -95,11 +95,15 @@ function weekStart(date: Date): Date {
 export type AccessoryId =
   | 'cap' | 'scarf' | 'flower' | 'crown' | 'sunglasses' | 'tophat' | 'bow' | 'star'
   | 'headphones' | 'butterfly'
-  | 'beanie' | 'partyhat' | 'glasses' | 'heart' | 'bandana';
+  | 'beanie' | 'partyhat' | 'glasses' | 'heart' | 'bandana'
+  | 'pumpkin' | 'santa';
 export type Slot = 'head' | 'face' | 'neck' | 'float';
 
-/** How you get it: a badge reward, Pro, or bought in the shop with seeds. */
-export type Accessory = { id: AccessoryId; emoji: string; name: string; slot: Slot; proOnly?: boolean; price?: number };
+/** Limited-time shop stock, as inclusive MM-DD dates (may wrap the new year). */
+export type Season = { name: string; from: string; to: string };
+
+/** How you get it: a badge reward, Pro, or bought in the shop with seeds (some only in season). */
+export type Accessory = { id: AccessoryId; emoji: string; name: string; slot: Slot; proOnly?: boolean; price?: number; season?: Season };
 
 export const ACCESSORIES: Record<AccessoryId, Accessory> = {
   cap: { id: 'cap', emoji: '🧢', name: 'Cap', slot: 'head' },
@@ -117,7 +121,23 @@ export const ACCESSORIES: Record<AccessoryId, Accessory> = {
   bandana: { id: 'bandana', emoji: '🟥', name: 'Bandana', slot: 'neck', price: 20 },
   glasses: { id: 'glasses', emoji: '👓', name: 'Glasses', slot: 'face', price: 25 },
   partyhat: { id: 'partyhat', emoji: '🥳', name: 'Party hat', slot: 'head', price: 40 },
+  pumpkin: { id: 'pumpkin', emoji: '🎃', name: 'Pumpkin hat', slot: 'head', price: 25, season: { name: 'harvest season', from: '09-15', to: '11-01' } },
+  santa: { id: 'santa', emoji: '🎅', name: 'Santa hat', slot: 'head', price: 25, season: { name: 'december', from: '12-01', to: '12-31' } },
 };
+
+function monthDay(date: Date): string {
+  return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+export function inSeason(season: Season, now: Date): boolean {
+  const today = monthDay(now);
+  return season.from <= season.to ? today >= season.from && today <= season.to : today >= season.from || today <= season.to;
+}
+
+/** What the shop sells today: permanent stock plus anything in season. Bought items are kept forever. */
+export function shopStock(now: Date): Accessory[] {
+  return SHOP.filter((a) => !a.season || inSeason(a.season, now));
+}
 
 /** Shop stock, cheapest first. */
 export const SHOP = (Object.values(ACCESSORIES) as Accessory[]).filter((a) => a.price !== undefined).sort((a, b) => a.price! - b.price!);
@@ -322,4 +342,34 @@ export function completedChallenges(items: Item[], now: Date, startedAt?: string
 /** Seeds from every completed weekly challenge since the user started. */
 export function challengeSeeds(items: Item[], now: Date, startedAt?: string | null): number {
   return completedChallenges(items, now, startedAt).reduce((n, c) => n + c.reward, 0);
+}
+
+// ── Weekly recap (the Sunday-evening notification) ──────────────────────────
+
+export type Recap = { rescued: number; donated: number; frozen: number; wasted: number };
+
+/** Units saved or wasted in the 7 days up to `now`. */
+export function weeklyRecap(items: Item[], now: Date): Recap {
+  const within = (iso?: string) => Boolean(iso) && daysSince(iso!, now) < 7 && daysSince(iso!, now) >= 0;
+  const units = (pred: (i: Item) => boolean) => items.filter(pred).reduce((n, i) => n + i.quantity, 0);
+  return {
+    rescued: units((i) => i.status === 'used' && within(i.resolvedAt)),
+    donated: units((i) => i.status === 'donated' && within(i.resolvedAt)),
+    frozen: units((i) => within(i.frozenAt)),
+    wasted: units((i) => i.status === 'wasted' && within(i.resolvedAt)),
+  };
+}
+
+/** One friendly line in the pet's voice; never scolds. */
+export function recapText(recap: Recap, pet: string): string {
+  const saved = recap.rescued + recap.donated + recap.frozen;
+  if (saved === 0 && recap.wasted === 0) return `quiet week. ${pet} misses you — what's in the fridge?`;
+  const parts = [
+    recap.rescued && `${recap.rescued} rescued`,
+    recap.donated && `${recap.donated} donated`,
+    recap.frozen && `${recap.frozen} frozen`,
+    `${recap.wasted} binned`,
+  ].filter(Boolean);
+  const mood = recap.wasted === 0 ? `${pet} is proud of you 🌱` : saved > recap.wasted ? `more saved than binned. ${pet} approves.` : `next week will be better. ${pet} believes in you.`;
+  return `this week: ${parts.join(', ')}. ${mood}`;
 }

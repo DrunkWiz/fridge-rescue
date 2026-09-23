@@ -11,4 +11,5 @@ export const STORAGE_KEYS = {
   items: 'fridge-rescue/items',
   admin: 'fridge-rescue/admin',
   game: 'fridge-rescue/game',
+  diary: 'fridge-rescue/diary',
 } as const;

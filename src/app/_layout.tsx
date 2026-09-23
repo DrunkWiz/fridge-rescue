@@ -8,6 +8,7 @@ import { CelebrationOverlay } from '@/components/celebration';
 import { Fonts } from '@/constants/theme';
 import { ensureNotificationPermission, rescheduleExpiryReminders } from '@/lib/notifications';
 import { initPurchases } from '@/lib/purchases';
+import { useGame } from '@/store/game';
 import { useItems } from '@/store/items';
 
 SplashScreen.preventAutoHideAsync();
@@ -27,9 +28,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (hasSaved) ensureNotificationPermission();
   }, [hasSaved]);
+  const pet = (useGame((s) => s.sproutName) || 'sprout').toLowerCase();
   useEffect(() => {
-    rescheduleExpiryReminders(items).catch((error) => console.warn('Could not schedule reminders', error));
-  }, [items]);
+    rescheduleExpiryReminders(items, pet).catch((error) => console.warn('Could not schedule reminders', error));
+  }, [items, pet]);
 
   useEffect(() => {
     if (hydrated) SplashScreen.hideAsync();
@@ -44,6 +46,8 @@ export default function RootLayout() {
         <Stack.Screen name="welcome" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="add-item" options={{ title: 'add item', presentation: 'modal' }} />
         <Stack.Screen name="scan" options={{ title: 'scan receipt', presentation: 'modal' }} />
+        <Stack.Screen name="paste" options={{ title: 'paste a list', presentation: 'modal' }} />
+        <Stack.Screen name="shopping" options={{ title: 'before you shop' }} />
         <Stack.Screen name="rescue" options={{ title: 'rescue' }} />
         <Stack.Screen name="donate" options={{ title: 'donation box' }} />
         <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />

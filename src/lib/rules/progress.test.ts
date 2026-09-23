@@ -9,6 +9,10 @@ import {
   dailyStars,
   dayKey,
   diffProgress,
+  inSeason,
+  recapText,
+  shopStock,
+  weeklyRecap,
   earnedBadges,
   growth,
   seedsEarned,
@@ -186,5 +190,23 @@ describe('weekly challenges', () => {
     assert.equal(currentChallenge(items, NOW).done, true);
     assert.equal(challengeSeeds(items, NOW, at(-1)), c.reward);
     assert.equal(challengeSeeds(items, NOW, null), 0);
+  });
+});
+
+describe('seasonal shop', () => {
+  it('sells seasonal items only in their window, including across the new year', () => {
+    assert.ok(shopStock(new Date(2026, 8, 23)).some((a) => a.id === 'pumpkin'));
+    assert.ok(!shopStock(new Date(2026, 5, 1)).some((a) => a.id === 'pumpkin'));
+    assert.ok(inSeason({ name: 'winter', from: '12-20', to: '01-05' }, new Date(2027, 0, 2)));
+    assert.ok(!inSeason({ name: 'winter', from: '12-20', to: '01-05' }, new Date(2027, 1, 2)));
+  });
+});
+
+describe('weekly recap', () => {
+  it('counts the last 7 days and stays kind', () => {
+    const recap = weeklyRecap([rescued(1, { quantity: 2 }), donated(3), binned(2), rescued(9)], NOW);
+    assert.deepEqual(recap, { rescued: 2, donated: 1, frozen: 0, wasted: 1 });
+    assert.match(recapText(recap, 'pip'), /2 rescued, 1 donated, 1 binned\. more saved than binned/);
+    assert.match(recapText({ rescued: 0, donated: 0, frozen: 0, wasted: 0 }, 'pip'), /quiet week/);
   });
 });

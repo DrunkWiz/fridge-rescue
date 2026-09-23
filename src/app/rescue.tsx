@@ -1,6 +1,8 @@
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -13,6 +15,8 @@ import { useIsPro } from '@/lib/purchases';
 import { CATEGORIES } from '@/lib/categories';
 import { addDays, daysUntil } from '@/lib/rules/dates';
 import { findRescueCandidates, RESCUE_WINDOW_DAYS } from '@/lib/rules/urgency';
+import { keepPhoto } from '@/lib/photos';
+import { useDiary } from '@/store/diary';
 import { withCelebration } from '@/store/game';
 import { useItems } from '@/store/items';
 
@@ -62,11 +66,22 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
 }
 
 export default function RescueScreen() {
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const items = useItems((s) => s.items);
   const markUsed = useItems((s) => s.markUsed);
   const addItem = useItems((s) => s.addItem);
   const [leftovers, setLeftovers] = useState(false);
+  const [photo, setPhoto] = useState<string | null>(null);
+  const addDiaryEntry = useDiary((s) => s.add);
+
+  const snapMeal = async () => {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.6, allowsEditing: true, aspect: [1, 1] };
+    // No camera (or declined)? Fall back to the gallery rather than dead-ending.
+    const result = perm.granted ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
+    if (!result.canceled) setPhoto(result.assets[0].uri);
+  };
   const isPro = useIsPro();
   const aiRecipes = isPro && hasRecipeApiKey;
 
@@ -96,6 +111,17 @@ export default function RescueScreen() {
   };
 
   const cooked = () => {
+    if (recipe) {
+      // Every rescue goes in the meal diary; the photo is optional.
+      const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+      let photoUri: string | undefined;
+      try {
+        photoUri = photo ? keepPhoto(photo, id) : undefined;
+      } catch (e) {
+        console.warn('Could not save diary photo', e);
+      }
+      addDiaryEntry({ id, at: new Date().toISOString(), title: recipe.title, itemNames: picked.map((i) => i.name), photoUri });
+    }
     withCelebration(() => {
       markUsed(picked.map((item) => item.id));
       // Leftovers are the food most often forgotten, so track them straight away.
@@ -152,6 +178,19 @@ export default function RescueScreen() {
         {recipe && (
           <>
             <RecipeCard recipe={recipe} />
+            <Pressable onPress={snapMeal} style={[styles.photoRow, { borderColor: theme.border }]} accessibilityRole="button">
+              {photo ? (
+                <Image source={{ uri: photo }} style={styles.thumb} contentFit="cover" />
+              ) : (
+                <ThemedText style={styles.camera}>📸</ThemedText>
+              )}
+              <View style={{ flex: 1 }}>
+                <ThemedText type="mono">{photo ? 'nice. retake?' : 'snap your meal for the diary'}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Optional · shows up on your impact page
+                </ThemedText>
+              </View>
+            </Pressable>
             <View style={styles.leftovers}>
               <View style={{ flex: 1 }}>
                 <ThemedText type="mono">there&apos;ll be leftovers</ThemedText>
@@ -184,4 +223,7 @@ const styles = StyleSheet.create({
   section: { marginTop: 12, marginBottom: 2 },
   step: { flexDirection: 'row', gap: 10, marginBottom: 4 },
   leftovers: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
+  photoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.5, borderRadius: 6, borderStyle: 'dashed', padding: 10 },
+  thumb: { width: 56, height: 56, borderRadius: 4 },
+  camera: { fontSize: 32, lineHeight: 40, width: 56, textAlign: 'center' },
 });

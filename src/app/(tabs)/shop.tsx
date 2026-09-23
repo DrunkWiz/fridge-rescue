@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,7 +17,7 @@ import {
   SEEDS_PER_CHECK_IN,
   SEEDS_PER_DONATED_UNIT,
   SEEDS_PER_RESCUED_UNIT,
-  SHOP,
+  shopStock,
   totalXp,
   type Accessory,
 } from '@/lib/rules/progress';
@@ -25,7 +26,8 @@ import { useItems } from '@/store/items';
 
 const ITEM_PALETTE = palette('content');
 
-function ShopItem({ item, balance }: { item: Accessory; balance: number }) {
+/** Buying takes two taps ("buy? 🌱15" then confirm) so a stray tap never spends seeds. */
+function ShopItem({ item, balance, armed, onArm }: { item: Accessory; balance: number; armed: boolean; onArm: (id: string | null) => void }) {
   const theme = useTheme();
   const bought = useGame((s) => s.bought.includes(item.id));
   const wearing = useGame((s) => s.equipped[item.slot] === item.id);
@@ -39,7 +41,10 @@ function ShopItem({ item, balance }: { item: Accessory; balance: number }) {
   const onPress = () => {
     if (proLocked) router.push('/paywall');
     else if (bought || item.proOnly) toggle(item.id);
-    else if (affordable) buy(item.id);
+    else if (affordable && armed) {
+      buy(item.id);
+      onArm(null);
+    } else if (affordable) onArm(item.id);
   };
 
   const label = proLocked
@@ -48,7 +53,9 @@ function ShopItem({ item, balance }: { item: Accessory; balance: number }) {
       ? wearing
         ? 'wearing'
         : 'wear'
-      : `🌱 ${item.price}`;
+      : armed
+        ? `tap to buy · 🌱${item.price}`
+        : `🌱 ${item.price}`;
 
   return (
     <Pressable
@@ -58,7 +65,7 @@ function ShopItem({ item, balance }: { item: Accessory; balance: number }) {
       style={({ pressed }) => [
         styles.item,
         {
-          borderColor: wearing ? theme.tint : theme.border,
+          borderColor: wearing || armed ? theme.tint : theme.border,
           backgroundColor: theme.background,
           opacity: pressed ? 0.7 : !bought && !item.proOnly && !affordable ? 0.45 : 1,
         },
@@ -69,7 +76,12 @@ function ShopItem({ item, balance }: { item: Accessory; balance: number }) {
       <ThemedText type="mono" style={styles.center} numberOfLines={1}>
         {item.name.toLowerCase()}
       </ThemedText>
-      <ThemedText type="mono" style={[styles.center, { fontWeight: 700, color: wearing ? theme.tint : theme.text }]}>
+      {item.season && !bought && (
+        <ThemedText type="mono" style={[styles.center, styles.limited, { color: theme.warning }]} numberOfLines={1}>
+          limited · {item.season.name}
+        </ThemedText>
+      )}
+      <ThemedText type="mono" style={[styles.center, { fontWeight: 700, color: wearing || armed ? theme.tint : theme.text }]} numberOfLines={1}>
         {label}
       </ThemedText>
     </Pressable>
@@ -82,8 +94,9 @@ export default function ShopScreen() {
   const items = useItems((s) => s.items);
   const equipped = useGame((s) => s.equipped);
   const balance = useSeedBalance();
+  const [armed, setArmed] = useState<string | null>(null);
 
-  const stock = [...SHOP, ...Object.values(ACCESSORIES).filter((a) => a.proOnly)];
+  const stock = [...shopStock(new Date()), ...Object.values(ACCESSORIES).filter((a) => a.proOnly)];
 
   return (
     <ThemedView style={styles.container}>
@@ -105,7 +118,7 @@ export default function ShopScreen() {
 
         <View style={styles.grid}>
           {stock.map((item) => (
-            <ShopItem key={item.id} item={item} balance={balance} />
+            <ShopItem key={item.id} item={item} balance={balance} armed={armed === item.id} onArm={setArmed} />
           ))}
         </View>
 
@@ -126,4 +139,5 @@ const styles = StyleSheet.create({
   item: { width: '31%', borderWidth: 1.5, borderRadius: 6, paddingVertical: 12, paddingHorizontal: 6, alignItems: 'center', gap: 4 },
   preview: { height: 56, justifyContent: 'center' },
   center: { textAlign: 'center' },
+  limited: { fontSize: 10, lineHeight: 14 },
 });

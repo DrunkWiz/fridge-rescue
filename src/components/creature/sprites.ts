@@ -166,6 +166,23 @@ export const ACCESSORY_PIXELS: Record<AccessoryId, Px[]> = {
     [EYE_ROW + 2, 4, 'K'], [EYE_ROW + 2, 5, 'K'], [EYE_ROW + 2, 6, 'K'], [EYE_ROW + 2, 9, 'K'], [EYE_ROW + 2, 10, 'K'], [EYE_ROW + 2, 11, 'K'],
   ],
   heart: [[6, 13, 'r'], [6, 15, 'r'], [7, 13, 'r'], [7, 14, 'r'], [7, 15, 'r'], [8, 14, 'r']],
+  pumpkin: [
+    [1, 7, 's'], [2, 7, 's'], [2, 8, 'l'],
+    ...[5, 6, 7, 8, 9, 10].map((c): Px => [3, c, 'o']),
+    ...[4, 5, 6, 7, 8, 9, 10, 11].map((c): Px => [4, c, 'o']),
+    ...[4, 5, 6, 7, 8, 9, 10, 11].map((c): Px => [5, c, 'o']),
+    ...[4, 5, 6, 7, 8, 9, 10, 11].map((c): Px => [6, c, 'o']),
+    [4, 6, 'K'], [4, 9, 'K'], [5, 6, 'y'], [5, 9, 'y'],
+    [6, 5, 'K'], [6, 7, 'K'], [6, 8, 'K'], [6, 10, 'K'],
+  ],
+  santa: [
+    [0, 12, 'w'], [0, 13, 'w'], [1, 11, 'r'], [1, 12, 'w'],
+    ...[9, 10].map((c): Px => [2, c, 'r']),
+    ...[7, 8, 9, 10].map((c): Px => [3, c, 'r']),
+    ...[6, 7, 8, 9, 10].map((c): Px => [4, c, 'r']),
+    ...[5, 6, 7, 8, 9, 10].map((c): Px => [5, c, 'r']),
+    ...[4, 5, 6, 7, 8, 9, 10, 11].map((c): Px => [6, c, 'w']),
+  ],
   bandana: [
     ...[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((c): Px => [16, c, 'b']),
     ...[5, 6, 7, 8, 9, 10].map((c): Px => [17, c, 'b']),
@@ -174,7 +191,7 @@ export const ACCESSORY_PIXELS: Record<AccessoryId, Px[]> = {
   ],
 };
 
-const HEAD_HIDES_FOLIAGE: AccessoryId[] = ['cap', 'crown', 'tophat', 'headphones', 'beanie', 'partyhat'];
+const HEAD_HIDES_FOLIAGE: AccessoryId[] = ['cap', 'crown', 'tophat', 'headphones', 'beanie', 'partyhat', 'pumpkin', 'santa'];
 
 function blank(): Grid {
   return Array.from({ length: HEIGHT }, () => Array.from({ length: WIDTH }, () => '.'));

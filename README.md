@@ -78,6 +78,12 @@ Sprout is 1-bit-style **pixel art** (a 16×20 grid, [`sprites.ts`](src/component
 
 Home opens on **what needs doing today**: food past its date ("did you eat it?"), then what to use soon, then the rest of the fridge. **Swipe right = ate it, swipe left = binned it**, both with undo. Tap an item for **froze it ❄** (adds 60 days and counts as a save), opened, or remove. Cooking a rescue recipe can **add the leftovers** with a 3-day date. Photo scanning gives free users **3 scans a month**, so the easiest way to add food isn't paywalled.
 
+### Stopping waste before it starts
+
+- **Before you shop**: paste your shopping list and the app flags what's already at home ("chickpeas: you already have 5, 17 months left"). Surplus is cheapest to prevent at the shop.
+- **Type or paste to add**: "2 x milk, eggs x6, 3 tins black beans" or an online order becomes a reviewable list with categories and dates guessed. No AI or network needed ([`lists.ts`](src/lib/rules/lists.ts)).
+- **Partial use**: "ate 1" on multi-packs, so the fridge matches reality.
+
 ### Why people keep coming back
 
 The app is only useful if it's opened *before* food goes off, so the game layer is built around that one habit:
@@ -90,6 +96,9 @@ The app is only useful if it's opened *before* food goes off, so the game layer 
 | **Seeds + shop** 🌱 | In-game currency spent on pixel outfits in the Shop tab | +2 per item rescued, +5 per item donated, +1 per daily fridge check, +10 per badge, plus weekly challenge rewards. **Seeds can't be bought with money** |
 | **Daily stars** ⭐ | Opening your fridge each day counts automatically (no fake "check-in" tap); the last 7 days show as ⭐ opened / 🌟 saved food | The habit that actually prevents waste, made visible |
 | **Weekly challenge** 🎯 | The one weekly goal: a new challenge every Monday ("rescue 3 fruit & veg", "make a donation"…) for bonus seeds | Same challenge for everyone each week, so it could become social later |
+| **Meal diary** 📸 | Every rescue lands in a diary on the Impact tab, with an optional photo of what you cooked | A scrapbook of meals that would have been waste; photos are copied into app storage so they survive |
+| **Seasonal outfits** 🎃 | Limited-time shop items: a pumpkin hat for harvest season (15 Sep–1 Nov), a Santa hat in December | Bought once, kept forever; buying takes two taps so a stray tap never spends seeds |
+| **Weekly recap** 🔔 | Sunday 6pm: "this week: 5 rescued, 2 donated, 0 binned. pip is proud of you 🌱" | Worded from the fridge and rescheduled on every change; never scolds |
 | **Money saved** 💰 | "≈ $20 saved": food eaten, donated or frozen, valued with rough per-category prices ([`money.ts`](src/lib/rules/money.ts)) | Money motivates more than meals; always shown as an estimate |
 | **Celebrations** 🎉 | Everyday saves get a quick toast with **undo**; level-ups, badges and completed challenges get veggie confetti. Haptics on device | Diffed before/after each action, so any new action gets it for free; keeping confetti for milestones keeps it special |
 | **Talk to Sprout** 💬 | Tap it: it jumps and tells you something you can act on now ("the spinach expires tomorrow…") | Always actionable, never trivia-only |

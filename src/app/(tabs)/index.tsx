@@ -53,6 +53,8 @@ function sproutLines(items: Item[], now: Date, startedAt: string | null): string
 
 const ateIt = (item: Item) => withCelebration(() => useItems.getState().setStatus(item.id, 'used'), `ate the ${item.name.toLowerCase()}`);
 const binnedIt = (item: Item) => withWasteNudge(() => useItems.getState().setStatus(item.id, 'wasted'), `binned the ${item.name.toLowerCase()}`);
+const ateOne = (item: Item) =>
+  withCelebration(() => useItems.getState().useSome(item.id, 1), `ate 1 of the ${item.name.toLowerCase()} · ${item.quantity - 1} left`);
 const frozeIt = (item: Item) => withCelebration(() => useItems.getState().freeze(item.id), `froze the ${item.name.toLowerCase()} · 60 more days`);
 
 function SmallButton({ label, color, onPress }: { label: string; color: string; onPress: () => void }) {
@@ -73,7 +75,8 @@ function MoreActions({ item, onDone }: { item: Item; onDone: () => void }) {
   };
   return (
     <View style={styles.actions}>
-      <SmallButton label="ate it" color={theme.tint} onPress={run(() => ateIt(item))} />
+      <SmallButton label={item.quantity > 1 ? 'ate all' : 'ate it'} color={theme.tint} onPress={run(() => ateIt(item))} />
+      {item.quantity > 1 && <SmallButton label="ate 1" color={theme.tint} onPress={run(() => ateOne(item))} />}
       {canFreeze(item) && <SmallButton label="froze it ❄" color={theme.text} onPress={run(() => frozeIt(item))} />}
       <SmallButton
         label={item.opened ? 'unopened' : 'opened'}
@@ -286,6 +289,11 @@ export default function HomeScreen() {
                   </View>
                 )}
                 <ChallengeLine items={items} now={now} />
+                <Pressable onPress={() => router.push('/shopping')} accessibilityRole="button" hitSlop={6}>
+                  <ThemedText type="mono" style={[styles.tiny, { color: theme.tint }]}>
+                    🛒 going shopping? check your list first →
+                  </ThemedText>
+                </Pressable>
               </>
             )}
           </View>

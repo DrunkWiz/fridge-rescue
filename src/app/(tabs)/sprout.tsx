@@ -154,7 +154,7 @@ export default function SproutScreen() {
                   <PixelGrid grid={buildAccessory(a.id)} palette={has ? ACCESSORY_PALETTE : LOCKED_PALETTE} pixel={4} />
                 </View>
                 <ThemedText type="mono" style={[styles.center, styles.tiny]} numberOfLines={1} themeColor={has ? 'text' : 'textSecondary'}>
-                  {has ? a.name.toLowerCase() : a.proOnly ? 'pro' : a.price !== undefined ? `🌱${a.price}` : '🔒'}
+                  {has ? a.name.toLowerCase() : a.proOnly ? 'pro' : a.season ? 'seasonal' : a.price !== undefined ? `🌱${a.price}` : '🔒'}
                 </ThemedText>
               </Pressable>
             );

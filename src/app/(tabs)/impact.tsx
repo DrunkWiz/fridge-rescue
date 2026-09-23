@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { Creature } from '@/components/creature/creature';
+import { MealDiary } from '@/components/meal-diary';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
@@ -85,6 +86,8 @@ export default function ImpactScreen() {
           💰 {formatMoney(moneySaved(items))} of food kept out of the bin
         </ThemedText>
         <Button label="Share my impact" onPress={share} />
+
+        <MealDiary />
 
         <ThemedText type="mono" style={[styles.heading, { fontWeight: 700 }]}>
           history

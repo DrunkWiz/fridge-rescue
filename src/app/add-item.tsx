@@ -91,6 +91,14 @@ export default function AddItemScreen() {
             Add everything from one photo{isPro ? '' : ` · ${freeScans} free this month`}
           </ThemedText>
         </Pressable>
+        <Pressable onPress={() => router.push('/paste')} accessibilityRole="button" style={[styles.scanCard, { borderColor: theme.border }]}>
+          <ThemedText type="mono" style={{ fontWeight: 700 }}>
+            📝 type or paste a list
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            &quot;milk, eggs, 3 tins tomatoes&quot; or an online order · free
+          </ThemedText>
+        </Pressable>
         <ThemedText type="mono" themeColor="textSecondary" style={{ textAlign: 'center' }}>
           — or add one item —
         </ThemedText>

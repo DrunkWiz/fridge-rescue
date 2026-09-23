@@ -25,6 +25,8 @@ type ItemsState = {
   /** Bulk add, e.g. from a scanned receipt. */
   addItems: (inputs: NewItem[]) => void;
   setStatus: (id: string, status: ItemStatus) => void;
+  /** Partial use: ate `quantity` of an item, the rest stays in the fridge. */
+  useSome: (id: string, quantity: number) => void;
   /** Rescue: the user cooked these. */
   markUsed: (ids: string[]) => void;
   /** Donate: splits off partial quantities so the rest stays in the fridge. */
@@ -91,6 +93,18 @@ export const useItems = create<ItemsState>()(
               : item,
           ),
         })),
+      useSome: (id, quantity) =>
+        set((s) => {
+          const resolvedAt = new Date().toISOString();
+          const eaten: Item[] = [];
+          const items = s.items.map((item) => {
+            if (item.id !== id) return item;
+            if (quantity >= item.quantity) return { ...item, status: 'used' as const, resolvedAt };
+            eaten.push({ ...item, id: makeId(), quantity, status: 'used', resolvedAt });
+            return { ...item, quantity: item.quantity - quantity };
+          });
+          return { items: [...items, ...eaten] };
+        }),
       markUsed: (ids) =>
         set((s) => {
           const resolvedAt = new Date().toISOString();
