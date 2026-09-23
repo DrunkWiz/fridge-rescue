@@ -10,8 +10,13 @@ import { lifetimeImpact } from './creature.ts';
 export const XP_PER_RESCUED_UNIT = 10;
 /** Donations are the rare, bigger event, so they're worth more. */
 export const XP_PER_DONATED_UNIT = 25;
-/** Saves (rescue or donate actions) per week that count as "goal met". */
-export const WEEKLY_GOAL = 3;
+/** Freezing is a smaller save than eating it, but still a save. */
+export const XP_PER_FROZEN_UNIT = 5;
+/**
+ * A perishable past its date isn't counted as waste straight away: the app asks
+ * "did you eat it?" first, and only counts it after this many days unanswered.
+ */
+export const EXPIRED_GRACE_DAYS = 2;
 
 export type Stage = { level: number; name: string; minXp: number };
 
@@ -27,9 +32,10 @@ export const STAGES: Stage[] = [
 
 export function totalXp(items: Item[]): number {
   return items.reduce((xp, item) => {
-    if (item.status === 'used') return xp + item.quantity * XP_PER_RESCUED_UNIT;
-    if (item.status === 'donated') return xp + item.quantity * XP_PER_DONATED_UNIT;
-    return xp;
+    const frozen = item.frozenAt ? item.quantity * XP_PER_FROZEN_UNIT : 0;
+    if (item.status === 'used') return xp + frozen + item.quantity * XP_PER_RESCUED_UNIT;
+    if (item.status === 'donated') return xp + frozen + item.quantity * XP_PER_DONATED_UNIT;
+    return xp + frozen;
   }, 0);
 }
 
@@ -49,11 +55,18 @@ export function growth(xp: number): Growth {
   return { xp, stage, next, progress };
 }
 
-/** The day food last went to waste: binned, or a perishable left past its date. */
+/** Perishables past their date that the user hasn't said "ate it" or "binned it" about yet. */
+export function awaitingAnswer(items: Item[], now: Date): Item[] {
+  return items.filter((i) => i.status === 'active' && !i.shelfStable && daysUntil(i.expiresAt, now) < 0);
+}
+
+/** The day food last went to waste: binned, or a perishable left unanswered past the grace period. */
 function lastWasteDay(items: Item[], now: Date): string | null {
   const dates = [
     ...items.filter((i) => i.status === 'wasted' && i.resolvedAt).map((i) => i.resolvedAt!),
-    ...items.filter((i) => i.status === 'active' && !i.shelfStable && daysUntil(i.expiresAt, now) < 0).map((i) => i.expiresAt),
+    ...awaitingAnswer(items, now)
+      .filter((i) => daysUntil(i.expiresAt, now) < -EXPIRED_GRACE_DAYS)
+      .map((i) => i.expiresAt),
   ];
   return dates.length ? dates.reduce((a, b) => (a > b ? a : b)) : null;
 }
@@ -78,34 +91,6 @@ function weekStart(date: Date): Date {
   return d;
 }
 
-function savesInWeek(items: Item[], start: Date): number {
-  const end = new Date(start);
-  end.setDate(end.getDate() + 7);
-  return items.filter((i) => {
-    if ((i.status !== 'used' && i.status !== 'donated') || !i.resolvedAt) return false;
-    const t = new Date(i.resolvedAt);
-    return t >= start && t < end;
-  }).length;
-}
-
-export function savesThisWeek(items: Item[], now: Date): number {
-  return savesInWeek(items, weekStart(now));
-}
-
-/**
- * Consecutive weeks meeting WEEKLY_GOAL. This week counts once it's met; until
- * then the streak is still alive from last week (you have till Sunday).
- */
-export function weeklyGoalStreak(items: Item[], now: Date): number {
-  let start = weekStart(now);
-  let streak = savesInWeek(items, start) >= WEEKLY_GOAL ? 1 : 0;
-  for (let i = 0; i < 520; i++) {
-    start = new Date(start.getFullYear(), start.getMonth(), start.getDate() - 7);
-    if (savesInWeek(items, start) < WEEKLY_GOAL) break;
-    streak++;
-  }
-  return streak;
-}
 
 export type AccessoryId =
   | 'cap' | 'scarf' | 'flower' | 'crown' | 'sunglasses' | 'tophat' | 'bow' | 'star'
@@ -155,7 +140,7 @@ type Stats = {
   mealsRescued: number;
   mealsDonated: number;
   streak: number;
-  weeklyStreak: number;
+  challengesDone: number;
   biggestDropOff: number;
 };
 
@@ -174,7 +159,7 @@ function stats(items: Item[], now: Date, startedAt?: string | null): Stats {
     mealsRescued: impact.mealsRescued,
     mealsDonated: impact.mealsDonated,
     streak: wasteFreeStreak(items, now, startedAt),
-    weeklyStreak: weeklyGoalStreak(items, now),
+    challengesDone: completedChallenges(items, now, startedAt).length,
     biggestDropOff: Math.max(0, ...dropOffs.values()),
   };
 }
@@ -187,7 +172,7 @@ export const BADGES: (Badge & { earned: (s: Stats) => boolean })[] = [
   { id: 'ten-meals-donated', title: 'Food bank friend', description: 'Donate 10 meals', reward: 'crown', earned: (s) => s.mealsDonated >= 10 },
   { id: 'waste-free-week', title: 'Waste-free week', description: '7 days without wasting food', reward: 'sunglasses', earned: (s) => s.streak >= 7 },
   { id: 'waste-free-month', title: 'Waste-free month', description: '30 days without wasting food', reward: 'tophat', earned: (s) => s.streak >= 30 },
-  { id: 'hat-trick', title: 'Hat-trick', description: `Hit the weekly goal 3 weeks running`, reward: 'bow', earned: (s) => s.weeklyStreak >= 3 },
+  { id: 'hat-trick', title: 'Hat-trick', description: 'Complete 3 weekly challenges', reward: 'bow', earned: (s) => s.challengesDone >= 3 },
   { id: 'big-box', title: 'Big box', description: 'Drop off 10+ items at once', reward: 'star', earned: (s) => s.biggestDropOff >= 10 },
 ];
 
@@ -208,6 +193,7 @@ export const SEEDS_PER_RESCUED_UNIT = 2;
 export const SEEDS_PER_DONATED_UNIT = 5;
 export const SEEDS_PER_CHECK_IN = 1;
 export const SEEDS_PER_BADGE = 10;
+export const SEEDS_PER_FROZEN_UNIT = 1;
 
 /** Local YYYY-MM-DD, the key for daily check-ins. */
 export function dayKey(date: Date): string {
@@ -219,6 +205,7 @@ export function seedsEarned(items: Item[], badges: BadgeId[], checkIns: string[]
   return (
     units('used') * SEEDS_PER_RESCUED_UNIT +
     units('donated') * SEEDS_PER_DONATED_UNIT +
+    items.filter((i) => i.frozenAt).reduce((n, i) => n + i.quantity, 0) * SEEDS_PER_FROZEN_UNIT +
     new Set(checkIns).size * SEEDS_PER_CHECK_IN +
     badges.length * SEEDS_PER_BADGE
   );
@@ -234,9 +221,10 @@ export function seedsSpent(bought: AccessoryId[]): number {
 export type DayStar = { day: string; stars: 0 | 1 | 2 };
 
 export function dailyStars(items: Item[], checkIns: string[], now: Date, days = 7): DayStar[] {
-  const saved = new Set(
-    items.filter((i) => (i.status === 'used' || i.status === 'donated') && i.resolvedAt).map((i) => dayKey(new Date(i.resolvedAt!))),
-  );
+  const saved = new Set([
+    ...items.filter((i) => (i.status === 'used' || i.status === 'donated') && i.resolvedAt).map((i) => dayKey(new Date(i.resolvedAt!))),
+    ...items.filter((i) => i.frozenAt).map((i) => dayKey(new Date(i.frozenAt!))),
+  ]);
   const checked = new Set(checkIns);
   return Array.from({ length: days }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (days - 1 - i));
@@ -320,13 +308,18 @@ export function currentChallenge(items: Item[], now: Date): ChallengeStatus {
   return { challenge, progress, done: progress >= challenge.goal };
 }
 
-/** Seeds from every completed weekly challenge since the user started. */
-export function challengeSeeds(items: Item[], now: Date, startedAt?: string | null): number {
-  if (!startedAt) return 0;
-  let total = 0;
+/** Every weekly challenge completed since the user started. */
+export function completedChallenges(items: Item[], now: Date, startedAt?: string | null): Challenge[] {
+  if (!startedAt) return [];
+  const done: Challenge[] = [];
   for (let start = weekStart(new Date(startedAt)); start <= now; start = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7)) {
     const c = challengeFor(start);
-    if (c.count(resolvedInWeek(items, start)) >= c.goal) total += c.reward;
+    if (c.count(resolvedInWeek(items, start)) >= c.goal) done.push(c);
   }
-  return total;
+  return done;
+}
+
+/** Seeds from every completed weekly challenge since the user started. */
+export function challengeSeeds(items: Item[], now: Date, startedAt?: string | null): number {
+  return completedChallenges(items, now, startedAt).reduce((n, c) => n + c.reward, 0);
 }

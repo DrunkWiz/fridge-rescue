@@ -254,6 +254,7 @@ export default function DonateScreen() {
         chosen.map((c) => ({ id: c.item.id, quantity: c.suggestedQuantity })),
         dropOff.name,
       ),
+      `donated ${units} item${units === 1 ? '' : 's'} to ${dropOff.name}`,
     );
     router.back();
   };

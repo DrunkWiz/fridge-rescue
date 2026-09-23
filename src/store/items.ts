@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 import { CATEGORIES } from '@/lib/categories';
 import { addDays } from '@/lib/rules/dates';
+import { FREEZER_EXTENSION_DAYS } from '@/lib/rules/urgency';
 import { persistStorage, STORAGE_KEYS } from '@/lib/storage';
 import type { Category, Item, ItemStatus } from '@/lib/types';
 
@@ -29,6 +30,10 @@ type ItemsState = {
   /** Donate: splits off partial quantities so the rest stays in the fridge. */
   donate: (entries: DonationEntry[], dropOffName: string) => void;
   setOpened: (id: string, opened: boolean) => void;
+  /** Moved to the freezer: pushes the date out and counts as a save. */
+  freeze: (id: string) => void;
+  /** Put the whole fridge back as it was — powers "undo". */
+  restore: (items: Item[]) => void;
   removeItem: (id: string) => void;
   loadDemoData: () => void;
   clearAll: () => void;
@@ -107,6 +112,18 @@ export const useItems = create<ItemsState>()(
           });
           return { items: [...items, ...donated] };
         }),
+      freeze: (id) =>
+        set((s) => {
+          const now = new Date();
+          return {
+            items: s.items.map((item) =>
+              item.id === id
+                ? { ...item, frozenAt: now.toISOString(), expiresAt: addDays(now, FREEZER_EXTENSION_DAYS).toISOString() }
+                : item,
+            ),
+          };
+        }),
+      restore: (items) => set({ items }),
       setOpened: (id, opened) =>
         set((s) => ({ items: s.items.map((item) => (item.id === id ? { ...item, opened } : item)) })),
       removeItem: (id) => set((s) => ({ items: s.items.filter((item) => item.id !== id) })),

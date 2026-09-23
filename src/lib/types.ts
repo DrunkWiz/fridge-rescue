@@ -32,4 +32,6 @@ export type Item = {
   resolvedAt?: string;
   /** Name of the drop-off point, for donated items. */
   donatedTo?: string;
+  /** ISO timestamp the user moved it to the freezer (its date was extended then). */
+  frozenAt?: string;
 };

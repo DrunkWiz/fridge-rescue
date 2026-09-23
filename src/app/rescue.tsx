@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -10,7 +10,8 @@ import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
 import { generateRecipe, hasRecipeApiKey, type Recipe } from '@/lib/api/recipes';
 import { useIsPro } from '@/lib/purchases';
-import { daysUntil } from '@/lib/rules/dates';
+import { CATEGORIES } from '@/lib/categories';
+import { addDays, daysUntil } from '@/lib/rules/dates';
 import { findRescueCandidates, RESCUE_WINDOW_DAYS } from '@/lib/rules/urgency';
 import { withCelebration } from '@/store/game';
 import { useItems } from '@/store/items';
@@ -64,6 +65,8 @@ export default function RescueScreen() {
   const insets = useSafeAreaInsets();
   const items = useItems((s) => s.items);
   const markUsed = useItems((s) => s.markUsed);
+  const addItem = useItems((s) => s.addItem);
+  const [leftovers, setLeftovers] = useState(false);
   const isPro = useIsPro();
   const aiRecipes = isPro && hasRecipeApiKey;
 
@@ -93,7 +96,18 @@ export default function RescueScreen() {
   };
 
   const cooked = () => {
-    withCelebration(() => markUsed(picked.map((item) => item.id)));
+    withCelebration(() => {
+      markUsed(picked.map((item) => item.id));
+      // Leftovers are the food most often forgotten, so track them straight away.
+      if (leftovers && recipe) {
+        addItem({
+          name: `Leftovers: ${recipe.title.toLowerCase()}`,
+          category: 'leftovers',
+          quantity: 1,
+          expiresAt: addDays(new Date(), CATEGORIES.leftovers.defaultShelfLifeDays).toISOString(),
+        });
+      }
+    }, `rescued ${picked.length} item${picked.length === 1 ? '' : 's'}`);
     router.back();
   };
 
@@ -137,6 +151,15 @@ export default function RescueScreen() {
         {recipe && (
           <>
             <RecipeCard recipe={recipe} />
+            <View style={styles.leftovers}>
+              <View style={{ flex: 1 }}>
+                <ThemedText type="mono">there&apos;ll be leftovers</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Adds them to your fridge with a {CATEGORIES.leftovers.defaultShelfLifeDays}-day date
+                </ThemedText>
+              </View>
+              <Switch value={leftovers} onValueChange={setLeftovers} />
+            </View>
             <Button label={`I cooked it — rescue ${picked.length} item${picked.length === 1 ? '' : 's'}`} onPress={cooked} />
             {aiRecipes ? (
               <Button label="Try another recipe" variant="outline" onPress={makeRecipe} loading={loading} />
@@ -159,4 +182,5 @@ const styles = StyleSheet.create({
   recipeTitle: { fontSize: 24, lineHeight: 30 },
   section: { marginTop: 12, marginBottom: 2 },
   step: { flexDirection: 'row', gap: 10, marginBottom: 4 },
+  leftovers: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
 });

@@ -74,6 +74,10 @@ Lifetime counters (**meals rescued** and **meals donated**) sit under the creatu
 
 Sprout is 1-bit-style **pixel art** (a 16×20 grid, [`sprites.ts`](src/components/creature/sprites.ts)): each mood has its own face and colour, each growth stage adds foliage, and every accessory is a pixel overlay. The rest of the UI follows: ink on white, typewriter numbers, a bracketed pixel XP bar `[■■■■■   ]`, square bordered cards, and a deadpan status line ("sprout is hungry."). Design inspiration came from pixel-pet habit apps like Walking Charlie.
 
+### Designed to be quick
+
+Home opens on **what needs doing today**: food past its date ("did you eat it?"), then what to use soon, then the rest of the fridge. **Swipe right = ate it, swipe left = binned it**, both with undo. Tap an item for **froze it ❄** (adds 60 days and counts as a save), opened, or remove. Cooking a rescue recipe can **add the leftovers** with a 3-day date. Photo scanning gives free users **3 scans a month**, so the easiest way to add food isn't paywalled.
+
 ### Why people keep coming back
 
 The app is only useful if it's opened *before* food goes off, so the game layer is built around that one habit:
@@ -81,13 +85,13 @@ The app is only useful if it's opened *before* food goes off, so the game layer 
 | Mechanic | What it does | Rule |
 |---|---|---|
 | **Growth** | Sprout grows from Seed to Ancient Tree: bigger, leafier, then blossoming | +10 XP per item rescued, +25 per item donated ([`progress.ts`](src/lib/rules/progress.ts)) |
-| **Waste-free streak** 🔥 | Days in a row without wasting food | Resets on binned food, *and* on a perishable left past its date. Counts from when you started, so backdated items can't grant an unearned streak |
-| **Weekly goal** 🎯 | 3 saves a week, with a weeks-in-a-row streak | Last week's streak stays alive until Sunday |
+| **Waste-free streak** 🔥 | Days in a row without wasting food | Resets on binned food. Expired food isn't assumed wasted: the app asks **"did you eat it?"** first, and only counts it after `EXPIRED_GRACE_DAYS` (2) unanswered. Counts from when you started, so backdated items can't grant an unearned streak |
 | **Badges → wardrobe** 🏅 | 8 badges, each unlocking a pixel accessory for Sprout (cap, scarf, crown, sunglasses…) | Cosmetics are **earned, not bought**; two extra are Pro |
 | **Seeds + shop** 🌱 | In-game currency spent on pixel outfits in the Shop tab | +2 per item rescued, +5 per item donated, +1 per daily fridge check, +10 per badge, plus weekly challenge rewards. **Seeds can't be bought with money** |
-| **Daily fridge check** ⭐ | One tap a day after glancing at what's expiring; the last 7 days show as stars (⭐ checked, 🌟 saved food) | The habit that actually prevents waste, made visible |
-| **Weekly challenge** 🎯 | A new goal every Monday ("rescue 3 fruit & veg", "make a donation"…) for bonus seeds | Same challenge for everyone each week, so it could become social later |
-| **Celebrations** 🎉 | Every rescue or donation pops veggie confetti, XP, level-ups and new badges, with haptics | Diffed before/after each action, so any new action gets it for free |
+| **Daily stars** ⭐ | Opening your fridge each day counts automatically (no fake "check-in" tap); the last 7 days show as ⭐ opened / 🌟 saved food | The habit that actually prevents waste, made visible |
+| **Weekly challenge** 🎯 | The one weekly goal: a new challenge every Monday ("rescue 3 fruit & veg", "make a donation"…) for bonus seeds | Same challenge for everyone each week, so it could become social later |
+| **Money saved** 💰 | "≈ $20 saved": food eaten, donated or frozen, valued with rough per-category prices ([`money.ts`](src/lib/rules/money.ts)) | Money motivates more than meals; always shown as an estimate |
+| **Celebrations** 🎉 | Everyday saves get a quick toast with **undo**; level-ups, badges and completed challenges get veggie confetti. Haptics on device | Diffed before/after each action, so any new action gets it for free; keeping confetti for milestones keeps it special |
 | **Talk to Sprout** 💬 | Tap it: it jumps and tells you something you can act on now ("the spinach expires tomorrow…") | Always actionable, never trivia-only |
 | **Reminders** 🔔 | A local notification the evening before perishables expire, in Sprout's voice | One per day, grouped; rescheduled whenever the fridge changes |
 | **Gentle consequences** 🥀 | Binning food shows the streak it ended, and Sprout wilts until your next rescue | No guilt trips, just a visible reason to do better next time |
@@ -99,7 +103,7 @@ Built on RevenueCat: one `pro` entitlement, one offering (monthly and annual), a
 | Free | Pro | 
 |---|---|
 | 25 tracked items | Unlimited items |
-| Add items by hand or barcode | **Scan a receipt or your shopping**: one photo adds everything |
+| Add by hand or barcode, plus 3 photo scans a month | **Unlimited** receipt / shopping photo scans |
 | Expiry tracking + basic recipes | AI recipes from exactly what's expiring |
 | **Full donation flow** | Month-by-month impact history + CSV export |
 | The creature + shareable impact counters | |

@@ -1,6 +1,14 @@
 import type { Item } from '../types.ts';
 import { daysUntil } from './dates.ts';
 
+/** Freezing a perishable buys roughly this many more days. */
+export const FREEZER_EXTENSION_DAYS = 60;
+
+/** Only fresh, unfrozen perishables can be frozen to save them. */
+export function canFreeze(item: Item): boolean {
+  return item.status === 'active' && !item.shelfStable && !item.frozenAt && item.category !== 'frozen';
+}
+
 /** Perishables expiring within this many days are offered for rescue. */
 export const RESCUE_WINDOW_DAYS = 3;
 

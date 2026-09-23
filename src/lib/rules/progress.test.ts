@@ -11,7 +11,6 @@ import {
   diffProgress,
   earnedBadges,
   growth,
-  savesThisWeek,
   seedsEarned,
   seedsSpent,
   snapshot,
@@ -19,9 +18,10 @@ import {
   totalXp,
   unlockedAccessories,
   wasteFreeStreak,
-  WEEKLY_GOAL,
-  weeklyGoalStreak,
   XP_PER_DONATED_UNIT,
+  XP_PER_FROZEN_UNIT,
+  EXPIRED_GRACE_DAYS,
+  awaitingAnswer,
   XP_PER_RESCUED_UNIT,
 } from './progress.ts';
 
@@ -79,8 +79,15 @@ describe('wasteFreeStreak', () => {
     assert.equal(wasteFreeStreak([item({ addedAt: at(-40) }), binned(4)], NOW), 4);
   });
 
-  it('also resets when a perishable is left past its date', () => {
-    assert.equal(wasteFreeStreak([item({ addedAt: at(-40), expiresAt: at(-2) })], NOW), 2);
+  it('asks before counting expired food as waste', () => {
+    const justExpired = item({ addedAt: at(-40), expiresAt: at(-EXPIRED_GRACE_DAYS) });
+    assert.equal(wasteFreeStreak([justExpired], NOW), 40);
+    assert.deepEqual(awaitingAnswer([justExpired], NOW).map((i) => i.id), [justExpired.id]);
+  });
+
+  it('counts it as waste once the grace period passes unanswered', () => {
+    const days = EXPIRED_GRACE_DAYS + 2;
+    assert.equal(wasteFreeStreak([item({ addedAt: at(-40), expiresAt: at(-days) })], NOW), days);
   });
 
   it('is zero for a brand-new user', () => {
@@ -88,27 +95,11 @@ describe('wasteFreeStreak', () => {
   });
 });
 
-describe('weekly goal', () => {
-  it('counts saves since Monday only', () => {
-    // NOW is Wednesday: 1 and 2 days ago are this week, 3 days ago is last Sunday.
-    assert.equal(savesThisWeek([rescued(1), donated(2), rescued(3)], NOW), 2);
-  });
-
-  it('keeps last week’s streak alive until this week is over', () => {
-    const lastWeek = Array.from({ length: WEEKLY_GOAL }, () => rescued(5));
-    const weekBefore = Array.from({ length: WEEKLY_GOAL }, () => rescued(12));
-    assert.equal(weeklyGoalStreak([...lastWeek, ...weekBefore], NOW), 2);
-  });
-
-  it('adds this week once the goal is met', () => {
-    const thisWeek = Array.from({ length: WEEKLY_GOAL }, () => rescued(1));
-    const lastWeek = Array.from({ length: WEEKLY_GOAL }, () => rescued(5));
-    assert.equal(weeklyGoalStreak([...thisWeek, ...lastWeek], NOW), 2);
-  });
-
-  it('breaks on a missed week', () => {
-    const twoWeeksAgo = Array.from({ length: WEEKLY_GOAL }, () => rescued(12));
-    assert.equal(weeklyGoalStreak(twoWeeksAgo, NOW), 0);
+describe('freezing', () => {
+  it('earns a little XP and counts as a save for the day', () => {
+    const frozen = item({ frozenAt: at(0), expiresAt: at(60) });
+    assert.equal(totalXp([frozen]), XP_PER_FROZEN_UNIT);
+    assert.equal(dailyStars([frozen], [], NOW, 1)[0].stars, 2);
   });
 });
 

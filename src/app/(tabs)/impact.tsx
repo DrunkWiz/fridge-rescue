@@ -10,6 +10,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { useIsPro } from '@/lib/purchases';
 import { creatureMood, lifetimeImpact } from '@/lib/rules/creature';
 import { historyToCsv, monthlyHistory, unitsToMeals } from '@/lib/rules/impact';
+import { formatMoney } from '@/lib/format';
+import { moneySaved } from '@/lib/rules/money';
 import { growth, totalXp } from '@/lib/rules/progress';
 import { useGame } from '@/store/game';
 import { useItems } from '@/store/items';
@@ -79,6 +81,9 @@ export default function ImpactScreen() {
             </View>
           </View>
         </View>
+        <ThemedText type="mono" style={{ textAlign: 'center' }}>
+          💰 {formatMoney(moneySaved(items))} of food kept out of the bin
+        </ThemedText>
         <Button label="Share my impact" onPress={share} />
 
         <ThemedText type="mono" style={[styles.heading, { fontWeight: 700 }]}>

@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { CelebrationOverlay } from '@/components/celebration';
 import { Fonts } from '@/constants/theme';
@@ -35,6 +36,7 @@ export default function RootLayout() {
   }, [hydrated]);
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerTitleStyle: { fontFamily: Fonts.mono }, headerShadowVisible: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -48,5 +50,6 @@ export default function RootLayout() {
       {/* Celebrations can be triggered from any screen, so they live above the navigator. */}
       <CelebrationOverlay />
     </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

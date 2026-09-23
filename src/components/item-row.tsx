@@ -40,6 +40,7 @@ export function ItemRow({ item, now, onPress }: { item: Item; now: Date; onPress
         <ThemedText type="small" themeColor="textSecondary">
           {CATEGORIES[item.category].label}
           {item.opened ? ' · opened' : ''}
+          {item.frozenAt ? ' · frozen ❄' : ''}
         </ThemedText>
       </View>
       <ThemedText type="mono" style={{ color: accent[urgency], fontWeight: 700 }}>

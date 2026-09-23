@@ -15,7 +15,7 @@ import { CATEGORIES, CATEGORY_KEYS } from '@/lib/categories';
 import { useIsPro } from '@/lib/purchases';
 import { addDays } from '@/lib/rules/dates';
 import type { ScannedItem } from '@/lib/rules/scan';
-import { useGame } from '@/store/game';
+import { FREE_SCANS_PER_MONTH, useFreeScansLeft, useGame } from '@/store/game';
 import { useItems } from '@/store/items';
 
 type Row = ScannedItem & { key: string; include: boolean };
@@ -94,6 +94,8 @@ export default function ScanScreen() {
   const isPro = useIsPro();
   const equipped = useGame((s) => s.equipped);
   const addItems = useItems((s) => s.addItems);
+  const recordScan = useGame((s) => s.recordScan);
+  const freeLeft = useFreeScansLeft();
 
   const [status, setStatus] = useState<'idle' | 'reading' | 'review'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +117,7 @@ export default function ScanScreen() {
     setStatus('reading');
     try {
       const items = await scanGroceries(asset.base64, mediaTypeOf(asset));
+      recordScan();
       if (items.length === 0) {
         setStatus('idle');
         setError("sprout couldn't find any food in that photo. try a clearer shot of the receipt.");
@@ -138,15 +141,16 @@ export default function ScanScreen() {
     router.dismissAll();
   };
 
-  if (!isPro) {
+  // Free users get a few scans a month so the easy path isn't paywalled; Pro is unlimited.
+  if (!isPro && freeLeft === 0 && status === 'idle') {
     return (
       <ThemedView style={[styles.container, styles.centered]}>
         <Creature mood="content" equipped={equipped} />
         <ThemedText type="mono" style={styles.center}>
-          snap a receipt or your shopping, and sprout adds everything at once.
+          you&apos;ve used your {FREE_SCANS_PER_MONTH} free scans this month.
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
-          Receipt scanning is part of Pro. Adding items by hand is always free.
+          Pro scans are unlimited. Adding items by hand or barcode is always free.
         </ThemedText>
         <Button label="See Pro" onPress={() => router.push('/paywall')} style={styles.wide} />
       </ThemedView>
@@ -210,6 +214,11 @@ export default function ScanScreen() {
       <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
         Sprout lists every food item with a best-guess use-by date. You check it before anything is added.
       </ThemedText>
+      {!isPro && (
+        <ThemedText type="mono" themeColor="textSecondary" style={styles.center}>
+          {freeLeft} of {FREE_SCANS_PER_MONTH} free scans left this month
+        </ThemedText>
+      )}
       <Button label="Take a photo" onPress={() => pick('camera')} style={styles.wide} />
       <Button label="Choose from photos" variant="outline" onPress={() => pick('library')} style={styles.wide} />
       {error && (

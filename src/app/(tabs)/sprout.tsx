@@ -8,21 +8,23 @@ import { PixelBar } from '@/components/pixel-bar';
 import { PixelGrid } from '@/components/pixel-grid';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { WeekStars } from '@/components/week-stars';
+import { formatMoney } from '@/lib/format';
+import { moneySaved } from '@/lib/rules/money';
 import { useTheme } from '@/hooks/use-theme';
 import { useIsPro } from '@/lib/purchases';
 import { creatureMood } from '@/lib/rules/creature';
 import {
   ACCESSORIES,
   BADGES,
+  completedChallenges,
+  dailyStars,
   earnedBadges,
   growth,
-  savesThisWeek,
   STAGES,
   totalXp,
   unlockedAccessories,
   wasteFreeStreak,
-  WEEKLY_GOAL,
-  weeklyGoalStreak,
   XP_PER_DONATED_UNIT,
   XP_PER_RESCUED_UNIT,
   type AccessoryId,
@@ -52,6 +54,7 @@ export default function SproutScreen() {
   const startedAt = useItems((s) => s.startedAt);
   const equipped = useGame((s) => s.equipped);
   const bought = useGame((s) => s.bought);
+  const checkIns = useGame((s) => s.checkIns);
   const toggleAccessory = useGame((s) => s.toggleAccessory);
   const isPro = useIsPro();
 
@@ -59,7 +62,6 @@ export default function SproutScreen() {
   const g = growth(totalXp(items));
   const badges = earnedBadges(items, now, startedAt);
   const unlocked = unlockedAccessories(badges, isPro, bought);
-  const saves = savesThisWeek(items, now);
 
   const wear = (id: AccessoryId) => {
     if (unlocked.includes(id)) toggleAccessory(id);
@@ -98,8 +100,15 @@ export default function SproutScreen() {
 
         <View style={styles.row}>
           <Stat value={`${wasteFreeStreak(items, now, startedAt)}`} label="🔥 days waste-free" />
-          <Stat value={`${Math.min(saves, WEEKLY_GOAL)}/${WEEKLY_GOAL}`} label="🎯 this week" />
-          <Stat value={`${weeklyGoalStreak(items, now)}`} label="🏆 goal weeks" />
+          <Stat value={formatMoney(moneySaved(items))} label="💰 saved" />
+          <Stat value={`${completedChallenges(items, now, startedAt).length}`} label="🎯 challenges" />
+        </View>
+
+        <View style={[styles.card, styles.stars, { borderColor: theme.border }]}>
+          <ThemedText type="mono" themeColor="textSecondary" style={[styles.tiny, styles.center]}>
+            ⭐ opened your fridge · 🌟 saved food that day
+          </ThemedText>
+          <WeekStars days={dailyStars(items, checkIns, now)} />
         </View>
 
         <ThemedText type="mono" style={styles.heading}>
@@ -165,6 +174,7 @@ const styles = StyleSheet.create({
   stages: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: 10 },
   row: { flexDirection: 'row', gap: 8 },
   card: { borderWidth: 1.5, borderRadius: 6 },
+  stars: { padding: 10, gap: 6 },
   stat: { flex: 1, paddingVertical: 10, paddingHorizontal: 4, alignItems: 'center' },
   heading: { marginTop: 8, fontWeight: 700 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

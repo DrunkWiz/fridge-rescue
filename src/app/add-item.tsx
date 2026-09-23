@@ -12,6 +12,7 @@ import { CATEGORIES, CATEGORY_KEYS } from '@/lib/categories';
 import { addDays } from '@/lib/rules/dates';
 import type { Category } from '@/lib/types';
 import { FREE_ITEM_LIMIT, useIsPro } from '@/lib/purchases';
+import { useFreeScansLeft } from '@/store/game';
 import { useItems } from '@/store/items';
 
 function Stepper({ value, onChange, min, step = 1 }: { value: number; onChange: (n: number) => void; min: number; step?: number }) {
@@ -38,6 +39,7 @@ export default function AddItemScreen() {
   const addItem = useItems((s) => s.addItem);
   const activeCount = useItems((s) => s.items.filter((item) => item.status === 'active').length);
   const isPro = useIsPro();
+  const freeScans = useFreeScansLeft();
   const atLimit = !isPro && activeCount >= FREE_ITEM_LIMIT;
 
   const [name, setName] = useState('');
@@ -86,7 +88,7 @@ export default function AddItemScreen() {
             📷 scan a receipt or your shopping
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Add everything from one photo{isPro ? '' : ' · Pro'}
+            Add everything from one photo{isPro ? '' : ` · ${freeScans} free this month`}
           </ThemedText>
         </Pressable>
         <ThemedText type="mono" themeColor="textSecondary" style={{ textAlign: 'center' }}>

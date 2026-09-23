@@ -9,7 +9,6 @@ import {
   dayKey,
   diffProgress,
   earnedBadges,
-  SEEDS_PER_CHECK_IN,
   seedsEarned,
   seedsSpent,
   snapshot,
@@ -18,13 +17,14 @@ import {
   type Slot,
 } from '@/lib/rules/progress';
 import { persistStorage, STORAGE_KEYS } from '@/lib/storage';
+import type { Item } from '@/lib/types';
 import { useItems } from '@/store/items';
 
 export type Moment =
-  | ({ kind: 'win' } & Celebration)
-  | { kind: 'waste'; streakLost: number }
-  | { kind: 'check-in'; seeds: number }
-  | { kind: 'bought'; id: AccessoryId };
+  | ({ kind: 'win'; undo?: Item[] } & Celebration)
+  | { kind: 'bought'; id: AccessoryId }
+  /** Light feedback for everyday actions, with undo. */
+  | { kind: 'toast'; text: string; undo?: Item[] };
 
 type GameState = {
   /** What Sprout is wearing, one accessory per slot. */
@@ -36,7 +36,11 @@ type GameState = {
   /** Accessories bought in the shop with seeds. */
   bought: AccessoryId[];
   toggleAccessory: (id: AccessoryId) => void;
+  /** Silent, automatic: the first time the fridge is looked at each day. */
   checkIn: () => void;
+  /** Month keys (YYYY-MM), one per photo scan — for the free monthly allowance. */
+  scans: string[];
+  recordScan: () => void;
   /** Returns false if the user can't afford it. */
   buy: (id: AccessoryId) => boolean;
   showMoment: (moment: Moment) => void;
@@ -50,13 +54,13 @@ export const useGame = create<GameState>()(
       moment: null,
       checkIns: [],
       bought: [],
+      scans: [],
       checkIn: () =>
         set((s) => {
           const today = dayKey(new Date());
-          if (s.checkIns.includes(today)) return s;
-          haptic('success');
-          return { checkIns: [...s.checkIns, today], moment: { kind: 'check-in', seeds: SEEDS_PER_CHECK_IN } };
+          return s.checkIns.includes(today) ? s : { checkIns: [...s.checkIns, today] };
         }),
+      recordScan: () => set((s) => ({ scans: [...s.scans, dayKey(new Date()).slice(0, 7)] })),
       buy: (id) => {
         const s = useGame.getState();
         const price = ACCESSORIES[id].price;
@@ -77,7 +81,7 @@ export const useGame = create<GameState>()(
     {
       name: STORAGE_KEYS.game,
       storage: persistStorage,
-      partialize: (s) => ({ equipped: s.equipped, checkIns: s.checkIns, bought: s.bought }),
+      partialize: (s) => ({ equipped: s.equipped, checkIns: s.checkIns, bought: s.bought, scans: s.scans }),
     },
   ),
 );
@@ -105,23 +109,37 @@ function haptic(kind: 'success' | 'warning') {
 }
 
 /**
- * Run a store action and celebrate whatever it earned: XP, a new growth stage,
- * new badges. Snapshots before and after, so any action gets this for free.
+ * Run a store action and reward it. Everyday saves get a light toast with undo;
+ * the full confetti card is kept for milestones (level-up, badge, challenge),
+ * so it stays special. Snapshots before and after, so any action gets this.
  */
-export function withCelebration(action: () => void) {
-  const { startedAt } = useItems.getState();
-  const before = snapshot(useItems.getState().items, new Date(), startedAt);
+export function withCelebration(action: () => void, label: string) {
+  const { items: previous, startedAt } = useItems.getState();
+  const before = snapshot(previous, new Date(), startedAt);
   action();
   const after = snapshot(useItems.getState().items, new Date(), startedAt);
-  const celebration = diffProgress(before, after);
-  if (!celebration) return;
-  useGame.getState().showMoment({ kind: 'win', ...celebration });
+  const c = diffProgress(before, after);
+  if (c && (c.levelUp || c.newBadges.length > 0 || c.challenge)) {
+    useGame.getState().showMoment({ kind: 'win', ...c, undo: previous });
+  } else {
+    useGame.getState().showMoment({ kind: 'toast', text: `${label}${c ? ` · +${c.xpGained} xp` : ''}`, undo: previous });
+  }
   haptic('success');
 }
 
-/** Binning food: a gentle, visible consequence — never a guilt trip. */
-export function withWasteNudge(action: () => void, streakBefore: number) {
+/** Binning food: a gentle, visible consequence — never a guilt trip — with undo for mis-taps. */
+export function withWasteNudge(action: () => void, label: string) {
+  const previous = useItems.getState().items;
   action();
-  useGame.getState().showMoment({ kind: 'waste', streakLost: streakBefore });
+  useGame.getState().showMoment({ kind: 'toast', text: `${label} · sprout is a bit sad`, undo: previous });
   haptic('warning');
+}
+
+/** Monthly photo scans free users get; Pro is unlimited. */
+export const FREE_SCANS_PER_MONTH = 3;
+
+export function useFreeScansLeft(): number {
+  const scans = useGame((s) => s.scans);
+  const month = dayKey(new Date()).slice(0, 7);
+  return Math.max(0, FREE_SCANS_PER_MONTH - scans.filter((m) => m === month).length);
 }
