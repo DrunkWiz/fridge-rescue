@@ -39,6 +39,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerTitleStyle: { fontFamily: Fonts.mono }, headerShadowVisible: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="add-item" options={{ title: 'Add item', presentation: 'modal' }} />
+        <Stack.Screen name="scan" options={{ title: 'scan receipt', presentation: 'modal' }} />
         <Stack.Screen name="rescue" options={{ title: 'Rescue' }} />
         <Stack.Screen name="donate" options={{ title: 'Donation box' }} />
         <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />

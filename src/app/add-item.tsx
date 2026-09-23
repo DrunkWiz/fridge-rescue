@@ -78,13 +78,27 @@ export default function AddItemScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Pressable
+          onPress={() => router.push('/scan')}
+          accessibilityRole="button"
+          style={[styles.scanCard, { borderColor: theme.border }]}>
+          <ThemedText type="mono" style={{ fontWeight: 700 }}>
+            📷 scan a receipt or your shopping
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Add everything from one photo{isPro ? '' : ' · Pro'}
+          </ThemedText>
+        </Pressable>
+        <ThemedText type="mono" themeColor="textSecondary" style={{ textAlign: 'center' }}>
+          — or add one item —
+        </ThemedText>
+
         <ThemedText type="smallBold">What is it?</ThemedText>
         <TextInput
           value={name}
           onChangeText={setName}
           placeholder="e.g. Spinach"
           placeholderTextColor={theme.textSecondary}
-          autoFocus
           returnKeyType="done"
           onSubmitEditing={save}
           style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
@@ -165,4 +179,5 @@ const styles = StyleSheet.create({
   stepValue: { minWidth: 36, textAlign: 'center' },
   save: { marginTop: 16 },
   limit: { marginTop: 16, gap: 10 },
+  scanCard: { borderWidth: 1.5, borderRadius: 6, padding: 14, gap: 2 },
 });

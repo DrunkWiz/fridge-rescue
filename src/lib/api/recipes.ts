@@ -1,7 +1,7 @@
-import Anthropic from '@anthropic-ai/sdk';
-
 import { CATEGORIES } from '@/lib/categories';
 import type { Item } from '@/lib/types';
+
+import { claude, CLAUDE_MODEL, hasAnthropicKey, jsonText } from './claude';
 
 export type Recipe = {
   title: string;
@@ -13,8 +13,6 @@ export type Recipe = {
   source: 'ai' | 'offline';
 };
 
-const API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
-const MODEL = 'claude-opus-5';
 
 const RECIPE_SCHEMA = {
   type: 'object',
@@ -41,7 +39,7 @@ const RECIPE_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-export const hasRecipeApiKey = Boolean(API_KEY);
+export const hasRecipeApiKey = hasAnthropicKey;
 
 function describe(items: Item[]): string {
   return items
@@ -54,12 +52,8 @@ function describe(items: Item[]): string {
  * common pantry staples, so the recipe actually rescues what's expiring.
  */
 async function generateWithClaude(items: Item[]): Promise<Recipe> {
-  // The key ships in the app bundle — acceptable for a hackathon demo, documented
-  // in the README; a production build would proxy this call through a backend.
-  const client = new Anthropic({ apiKey: API_KEY, dangerouslyAllowBrowser: true });
-
-  const response = await client.beta.messages.create({
-    model: MODEL,
+  const response = await claude().beta.messages.create({
+    model: CLAUDE_MODEL,
     max_tokens: 4000,
     betas: ['server-side-fallback-2026-07-01'],
     fallbacks: 'default',
@@ -71,10 +65,7 @@ async function generateWithClaude(items: Item[]): Promise<Recipe> {
     messages: [{ role: 'user', content: `These need using up in the next few days:\n${describe(items)}` }],
   });
 
-  if (response.stop_reason === 'refusal') throw new Error('Recipe request was declined');
-  const text = response.content.find((block) => block.type === 'text');
-  if (!text || text.type !== 'text') throw new Error('No recipe in response');
-  return { ...(JSON.parse(text.text) as Omit<Recipe, 'source'>), source: 'ai' };
+  return { ...(JSON.parse(jsonText(response)) as Omit<Recipe, 'source'>), source: 'ai' };
 }
 
 /**
@@ -111,7 +102,7 @@ export function offlineRecipe(items: Item[]): Recipe {
 
 /** AI recipes are a Pro feature; everyone gets the offline recipe. */
 export async function generateRecipe(items: Item[], { ai }: { ai: boolean }): Promise<Recipe> {
-  if (!ai || !API_KEY) return offlineRecipe(items);
+  if (!ai || !hasAnthropicKey) return offlineRecipe(items);
   try {
     return await generateWithClaude(items);
   } catch (error) {

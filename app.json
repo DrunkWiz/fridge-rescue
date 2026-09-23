@@ -54,6 +54,13 @@
         {
           "color": "#2F8F5B"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Fridge Rescue reads photos of receipts and groceries to add items for you.",
+          "cameraPermission": "Fridge Rescue uses the camera to scan receipts, groceries and barcodes."
+        }
       ]
     ],
     "experiments": {

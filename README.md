@@ -99,6 +99,7 @@ Built on RevenueCat: one `pro` entitlement, one offering (monthly and annual), a
 | Free | Pro | 
 |---|---|
 | 25 tracked items | Unlimited items |
+| Add items by hand or barcode | **Scan a receipt or your shopping**: one photo adds everything |
 | Expiry tracking + basic recipes | AI recipes from exactly what's expiring |
 | **Full donation flow** | Month-by-month impact history + CSV export |
 | The creature + shareable impact counters | |
@@ -115,7 +116,7 @@ Built on RevenueCat: one `pro` entitlement, one offering (monthly and annual), a
 - **Zustand + AsyncStorage, no database.** The whole fridge is roughly 50 items. It's one JSON blob loaded on launch and written on every change. SQLite would cost a day and buy nothing.
 - **Business rules are pure functions** in [`src/lib/rules/`](src/lib/rules): urgency, surplus detection, creature mood, impact history. They take `now` as a parameter and are covered by tests on Node's built-in test runner (`npm test`, no test framework dependency).
 - **Keyless APIs** for everything except AI: Open Food Facts (barcode → product), Overpass (food banks), Nominatim (typed location → coordinates).
-- **Claude** (`claude-opus-5`, low effort, JSON-schema structured output) for Pro recipes, with a built-in recipe as a fallback, so the app works with no key and no network.
+- **Claude** (`claude-opus-5`, JSON-schema structured output) for two Pro features: recipes from expiring items (with a built-in fallback recipe) and **receipt / grocery photo scanning**. Scanning is one vision call that returns name, category, quantity and estimated shelf life per item. The output then goes through a pure, tested sanitizer ([`scan.ts`](src/lib/rules/scan.ts)) that drops non-food lines like carrier bags and totals, merges duplicate receipt lines, clamps values, and fixes SHOUTY receipt names, before the user reviews and edits the list. Without a key, a labelled sample receipt demonstrates the same review flow.
 
 ```
 src/
@@ -136,7 +137,8 @@ src/
 - **Donations are trust-based.** "I dropped these off" is a tap, not a verification. Next: partner food banks show a rotating check-in code at the drop-off point; entering it confirms the donation and could unlock verified badges.
 - **The AI key is in the app bundle.** Fine for a demo, not for production. Next: proxy the recipe call through a small backend that holds the key and rate-limits per user.
 - **Meals are an estimate.** One donated item ≈ 0.7 meals (`MEALS_PER_DONATED_ITEM`). It's a rough, conservative heuristic, not a nutritional calculation.
-- **Not yet built:** receipt scanning, household sharing, expiry notifications, earned cosmetics.
+- **Scanned shelf lives are estimates.** Receipts rarely print use-by dates, so Claude estimates typical shelf life; the review screen shows every date before anything is saved.
+- **Not yet built:** household sharing.
 
 ## Setup
 

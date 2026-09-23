@@ -182,7 +182,7 @@ function ChallengeCard({ items, now }: { items: Item[]; now: Date }) {
   return (
     <View style={[styles.card, { borderColor: done ? theme.tint : theme.border }]}>
       <View style={styles.between}>
-        <ThemedText type="mono" style={{ fontWeight: 700 }}>
+        <ThemedText type="mono" style={{ fontWeight: 700, flex: 1 }} numberOfLines={1}>
           {done ? '✓ ' : ''}weekly challenge
         </ThemedText>
         <ThemedText type="mono" themeColor="textSecondary">
@@ -364,5 +364,5 @@ const styles = StyleSheet.create({
   itemBlock: { gap: 6 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 4, paddingBottom: 4 },
   action: { borderWidth: 1.5, borderRadius: 4, paddingHorizontal: 10, paddingVertical: 4 },
-  fab: { position: 'absolute', alignSelf: 'center', borderRadius: 6, paddingHorizontal: 22, paddingVertical: 12 },
+  fab: { position: 'absolute', right: 16, borderRadius: 6, paddingHorizontal: 18, paddingVertical: 12 },
 });

@@ -21,6 +21,8 @@ type ItemsState = {
   /** When this user started — streaks never count from before it. */
   startedAt: string | null;
   addItem: (input: NewItem) => void;
+  /** Bulk add, e.g. from a scanned receipt. */
+  addItems: (inputs: NewItem[]) => void;
   setStatus: (id: string, status: ItemStatus) => void;
   /** Rescue: the user cooked these. */
   markUsed: (ids: string[]) => void;
@@ -74,6 +76,8 @@ export const useItems = create<ItemsState>()(
       items: [],
       startedAt: null,
       addItem: (input) => set((s) => ({ items: [...s.items, buildItem(input)], startedAt: s.startedAt ?? new Date().toISOString() })),
+      addItems: (inputs) =>
+        set((s) => ({ items: [...s.items, ...inputs.map((i) => buildItem(i))], startedAt: s.startedAt ?? new Date().toISOString() })),
       setStatus: (id, status) =>
         set((s) => ({
           items: s.items.map((item) =>
