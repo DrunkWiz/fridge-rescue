@@ -14,20 +14,21 @@ export const FREE_ITEM_LIMIT = 25;
  * A Test Store key (prefix `test_`) works both on device and in the browser —
  * the SDK falls back to its browser mode on web. No App Store / Play account needed.
  */
-const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY;
+const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY?.trim();
 
 /**
- * Admin bypass for testing Pro features without a purchase. Only honoured in
- * development builds (__DEV__), so a release build can never unlock Pro this way.
+ * Admin mode for judges and testing: Pro on, every outfit unlocked and free to swap.
+ * The code is deliberately simple and published in the README, because judges need
+ * to reach every feature without buying anything. This app is never shipped to a
+ * store (Next Gen track), so it works in every build; remove it before any real release.
  */
-const ADMIN_KEY = process.env.EXPO_PUBLIC_ADMIN_PRO_KEY;
-export const adminBypassAvailable = __DEV__ && Boolean(ADMIN_KEY);
+export const ADMIN_CODE = 'shipaton';
 
 type ProState = {
   configured: boolean;
   /** Real entitlement from RevenueCat. */
   entitled: boolean;
-  /** Admin testing override; ignored outside development builds. */
+  /** Admin mode (see ADMIN_CODE). */
   adminOverride: boolean;
   setCustomerInfo: (info: CustomerInfo) => void;
   /** Returns true if the key matched and Pro was switched on. */
@@ -43,7 +44,7 @@ export const useProState = create<ProState>()(
       adminOverride: false,
       setCustomerInfo: (info) => set({ entitled: info.entitlements.active[ENTITLEMENT_ID] !== undefined }),
       unlockAdmin: (key) => {
-        const ok = adminBypassAvailable && key.trim() === ADMIN_KEY;
+        const ok = key.trim().toLowerCase() === ADMIN_CODE;
         if (ok) set({ adminOverride: true });
         return ok;
       },
@@ -58,7 +59,12 @@ export type ProSource = 'purchase' | 'admin' | null;
 
 /** How the user has Pro, if at all. Purchases take precedence over the admin override. */
 export function useProSource(): ProSource {
-  return useProState((s) => (s.entitled ? 'purchase' : adminBypassAvailable && s.adminOverride ? 'admin' : null));
+  return useProState((s) => (s.entitled ? 'purchase' : s.adminOverride ? 'admin' : null));
+}
+
+/** Admin mode also unlocks every outfit, not just Pro. */
+export function useIsAdmin(): boolean {
+  return useProState((s) => s.adminOverride);
 }
 
 export function useIsPro(): boolean {

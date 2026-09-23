@@ -21,7 +21,7 @@ function ProPill() {
       accessibilityRole="button"
       style={[styles.pill, { borderColor: color }]}>
       <ThemedText type="mono" style={{ color, fontWeight: 700 }}>
-        {source === 'purchase' ? 'PRO ✓' : source === 'admin' ? 'PRO (admin)' : 'GO PRO'}
+        {source === 'purchase' ? 'PRO ✓' : source === 'admin' ? 'ADMIN' : 'GO PRO'}
       </ThemedText>
     </Pressable>
   );

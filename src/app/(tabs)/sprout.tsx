@@ -12,7 +12,7 @@ import { WeekStars } from '@/components/week-stars';
 import { formatMoney } from '@/lib/format';
 import { moneySaved } from '@/lib/rules/money';
 import { useTheme } from '@/hooks/use-theme';
-import { useIsPro } from '@/lib/purchases';
+import { useIsAdmin, useIsPro } from '@/lib/purchases';
 import { creatureMood } from '@/lib/rules/creature';
 import {
   ACCESSORIES,
@@ -57,11 +57,13 @@ export default function SproutScreen() {
   const checkIns = useGame((s) => s.checkIns);
   const toggleAccessory = useGame((s) => s.toggleAccessory);
   const isPro = useIsPro();
+  const isAdmin = useIsAdmin();
 
   const now = new Date();
   const g = growth(totalXp(items));
   const badges = earnedBadges(items, now, startedAt);
-  const unlocked = unlockedAccessories(badges, isPro, bought);
+  // Admin mode (for judges) unlocks the whole wardrobe.
+  const unlocked = isAdmin ? (Object.keys(ACCESSORIES) as AccessoryId[]) : unlockedAccessories(badges, isPro, bought);
 
   const wear = (id: AccessoryId) => {
     if (unlocked.includes(id)) toggleAccessory(id);

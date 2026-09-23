@@ -9,7 +9,7 @@ import { PixelGrid } from '@/components/pixel-grid';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
-import { useIsPro } from '@/lib/purchases';
+import { useIsAdmin, useIsPro } from '@/lib/purchases';
 import { creatureMood } from '@/lib/rules/creature';
 import {
   ACCESSORIES,
@@ -17,6 +17,7 @@ import {
   SEEDS_PER_CHECK_IN,
   SEEDS_PER_DONATED_UNIT,
   SEEDS_PER_RESCUED_UNIT,
+  SHOP,
   shopStock,
   totalXp,
   type Accessory,
@@ -34,13 +35,16 @@ function ShopItem({ item, balance, armed, onArm }: { item: Accessory; balance: n
   const buy = useGame((s) => s.buy);
   const toggle = useGame((s) => s.toggleAccessory);
   const isPro = useIsPro();
+  // Admin mode (for judges): everything is owned, so every tap just puts it on or takes it off.
+  const isAdmin = useIsAdmin();
+  const owned = bought || item.proOnly || isAdmin;
 
   const proLocked = item.proOnly && !isPro;
   const affordable = item.price !== undefined && balance >= item.price;
 
   const onPress = () => {
     if (proLocked) router.push('/paywall');
-    else if (bought || item.proOnly) toggle(item.id);
+    else if (owned) toggle(item.id);
     else if (affordable && armed) {
       buy(item.id);
       onArm(null);
@@ -49,7 +53,7 @@ function ShopItem({ item, balance, armed, onArm }: { item: Accessory; balance: n
 
   const label = proLocked
     ? 'PRO'
-    : bought || item.proOnly
+    : owned
       ? wearing
         ? 'wearing'
         : 'wear'
@@ -67,7 +71,7 @@ function ShopItem({ item, balance, armed, onArm }: { item: Accessory; balance: n
         {
           borderColor: wearing || armed ? theme.tint : theme.border,
           backgroundColor: theme.background,
-          opacity: pressed ? 0.7 : !bought && !item.proOnly && !affordable ? 0.45 : 1,
+          opacity: pressed ? 0.7 : !owned && !affordable ? 0.45 : 1,
         },
       ]}>
       <View style={styles.preview}>
@@ -76,7 +80,7 @@ function ShopItem({ item, balance, armed, onArm }: { item: Accessory; balance: n
       <ThemedText type="mono" style={styles.center} numberOfLines={1}>
         {item.name.toLowerCase()}
       </ThemedText>
-      {item.season && !bought && (
+      {item.season && !owned && (
         <ThemedText type="mono" style={[styles.center, styles.limited, { color: theme.warning }]} numberOfLines={1}>
           limited · {item.season.name}
         </ThemedText>
@@ -96,7 +100,9 @@ export default function ShopScreen() {
   const balance = useSeedBalance();
   const [armed, setArmed] = useState<string | null>(null);
 
-  const stock = [...shopStock(new Date()), ...Object.values(ACCESSORIES).filter((a) => a.proOnly)];
+  const isAdmin = useIsAdmin();
+  // Admin mode shows out-of-season stock too.
+  const stock = [...(isAdmin ? SHOP : shopStock(new Date())), ...Object.values(ACCESSORIES).filter((a) => a.proOnly)];
 
   return (
     <ThemedView style={styles.container}>

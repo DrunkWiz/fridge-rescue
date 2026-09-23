@@ -124,6 +124,8 @@ Built on RevenueCat: one `pro` entitlement, one offering (monthly and annual), a
 
 **No developer account needed.** Purchases run against RevenueCat's **Test Store**, so the full purchase flow works on a development build and in the browser preview, without App Store Connect or Play Console.
 
+**For judges: admin mode.** To try everything without a purchase, open the **Impact** tab, tap **"judges & testing: admin mode →"** at the bottom, and enter the code **`shipaton`**. (Long-pressing the GO PRO pill opens the same screen.) It turns on every Pro feature and unlocks every outfit for Sprout, including badge rewards, shop items and out-of-season ones, all free to put on and swap. The code is public on purpose. The app is never shipped to a store, so this is a demo convenience, and it would be removed before any real release.
+
 ## Tech
 
 - **Expo SDK 57 / React Native 0.86, TypeScript, Expo Router.** One codebase, no Mac required, and a first-class RevenueCat SDK. The browser preview is used for fast iteration; the app itself is a mobile app built with EAS.
@@ -199,7 +201,6 @@ Requires `ANDROID_HOME` (e.g. `%LOCALAPPDATA%AndroidSdk`) and `JAVA_HOME` pointi
 |---|---|---|
 | `EXPO_PUBLIC_REVENUECAT_API_KEY` | Paywall + purchases (use a Test Store key, prefix `test_`) | "Go Pro" explains purchases aren't set up |
 | `EXPO_PUBLIC_ANTHROPIC_API_KEY` | AI recipes (Pro) | Built-in recipes only |
-| `EXPO_PUBLIC_ADMIN_PRO_KEY` | Testing Pro without a purchase: long-press the Pro pill on Home and enter it. **Development builds only**; release builds ignore it. | No admin bypass |
 
 **Tests, lint, types:**
 

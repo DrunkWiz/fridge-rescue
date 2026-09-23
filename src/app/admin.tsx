@@ -6,77 +6,75 @@ import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
-import { adminBypassAvailable, useProSource, useProState } from '@/lib/purchases';
+import { ADMIN_CODE, useProSource, useProState } from '@/lib/purchases';
 
-/** Hidden testing screen (long-press the Pro pill on Home). Development builds only. */
+/** Admin mode for judges: Pro on and every outfit unlocked, no purchase needed. Linked from the Impact tab. */
 export default function AdminScreen() {
   const theme = useTheme();
   const source = useProSource();
+  const admin = useProState((s) => s.adminOverride);
   const unlockAdmin = useProState((s) => s.unlockAdmin);
   const clearAdmin = useProState((s) => s.clearAdmin);
   const [key, setKey] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  if (!adminBypassAvailable) {
-    return (
-      <ThemedView style={styles.container}>
-        <ThemedText themeColor="textSecondary">
-          Admin bypass is only available in development builds with EXPO_PUBLIC_ADMIN_PRO_KEY set.
-        </ThemedText>
-      </ThemedView>
-    );
-  }
-
   const submit = () => {
     if (unlockAdmin(key)) router.back();
-    else setError('That key does not match.');
+    else setError(`That's not it. The code is "${ADMIN_CODE}".`);
   };
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText>
-        Pro status:{' '}
-        <ThemedText type="smallBold" style={{ color: theme.tint }}>
-          {source === 'purchase' ? 'active (purchased)' : source === 'admin' ? 'active (admin override)' : 'not active'}
+      <ThemedText type="mono">
+        admin mode:{' '}
+        <ThemedText type="mono" style={{ color: admin ? theme.warning : theme.textSecondary, fontWeight: 700 }}>
+          {admin ? 'on' : 'off'}
         </ThemedText>
+        {source === 'purchase' ? '  ·  pro: purchased ✓' : ''}
       </ThemedText>
 
-      {source === 'admin' ? (
-        <Button label="Turn off admin override" variant="outline" onPress={clearAdmin} />
+      <ThemedText type="small" themeColor="textSecondary">
+        For judges and testing. Turns on every Pro feature and unlocks every outfit for Sprout (badge rewards, shop
+        items, seasonal ones), all free to put on and swap. Nothing is charged.
+      </ThemedText>
+
+      {admin ? (
+        <Button label="Turn off admin mode" variant="outline" onPress={clearAdmin} />
       ) : (
         <>
+          <ThemedText type="mono">
+            code: <ThemedText type="mono" style={{ fontWeight: 700 }}>{ADMIN_CODE}</ThemedText>
+          </ThemedText>
           <TextInput
             value={key}
             onChangeText={(text) => {
               setKey(text);
               setError(null);
             }}
-            placeholder="Admin key"
+            placeholder="type the code"
             placeholderTextColor={theme.textSecondary}
-            secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
             onSubmitEditing={submit}
-            style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
+            style={[styles.input, { color: theme.text, borderColor: theme.border }]}
           />
           {error && (
             <ThemedText type="small" style={{ color: theme.danger }}>
               {error}
             </ThemedText>
           )}
-          <Button label="Unlock Pro for testing" onPress={submit} disabled={!key.trim()} />
+          <Button label="Turn on admin mode" onPress={submit} disabled={!key.trim()} />
         </>
       )}
 
       <ThemedText type="small" themeColor="textSecondary">
-        The override only works in development builds. Release builds ignore it, so Pro there always comes from a real
-        RevenueCat purchase.
+        To see the real purchase flow instead, tap GO PRO. It uses RevenueCat&apos;s Test Store, so no real money moves.
       </ThemedText>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, gap: 12 },
-  input: { borderRadius: 6, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
+  container: { flex: 1, padding: 16, gap: 14 },
+  input: { borderWidth: 1.5, borderRadius: 6, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
 });

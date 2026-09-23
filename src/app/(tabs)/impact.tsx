@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -121,6 +121,12 @@ export default function ImpactScreen() {
             <Button label="Export CSV" variant="outline" onPress={() => exportCsv(historyToCsv(items))} />
           </>
         )}
+
+        <Pressable onPress={() => router.push('/admin')} accessibilityRole="button" hitSlop={8} style={styles.admin}>
+          <ThemedText type="mono" themeColor="textSecondary" style={styles.adminText}>
+            judges &amp; testing: admin mode →
+          </ThemedText>
+        </Pressable>
       </ScrollView>
     </ThemedView>
   );
@@ -135,4 +141,6 @@ const styles = StyleSheet.create({
   heading: { marginTop: 12 },
   locked: { borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 6, padding: 18, gap: 12 },
   month: { borderWidth: 1.5, borderRadius: 6, padding: 14, gap: 4 },
+  admin: { alignSelf: 'center', marginTop: 16, padding: 6 },
+  adminText: { fontSize: 12, textDecorationLine: 'underline' },
 });
