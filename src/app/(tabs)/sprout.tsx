@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Creature } from '@/components/creature/creature';
 import { buildAccessory, palette } from '@/components/creature/sprites';
+import { PixelBar } from '@/components/pixel-bar';
 import { PixelGrid } from '@/components/pixel-grid';
-import { ProgressBar } from '@/components/progress-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
@@ -31,15 +31,14 @@ import { useGame } from '@/store/game';
 import { useItems } from '@/store/items';
 
 const ACCESSORY_PALETTE = palette('content');
+const LOCKED_PALETTE = Object.fromEntries(Object.keys(ACCESSORY_PALETTE).map((k) => [k, '#C9C9C2']));
 
 function Stat({ value, label }: { value: string; label: string }) {
   const theme = useTheme();
   return (
-    <View style={[styles.stat, { backgroundColor: theme.backgroundElement }]}>
-      <ThemedText type="subtitle" style={{ fontSize: 26, lineHeight: 32 }}>
-        {value}
-      </ThemedText>
-      <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
+    <View style={[styles.card, styles.stat, { borderColor: theme.border }]}>
+      <ThemedText type="monoLarge">{value}</ThemedText>
+      <ThemedText type="mono" themeColor="textSecondary" style={[styles.center, styles.tiny]}>
         {label}
       </ThemedText>
     </View>
@@ -52,8 +51,8 @@ export default function SproutScreen() {
   const items = useItems((s) => s.items);
   const startedAt = useItems((s) => s.startedAt);
   const equipped = useGame((s) => s.equipped);
-  const toggleAccessory = useGame((s) => s.toggleAccessory);
   const bought = useGame((s) => s.bought);
+  const toggleAccessory = useGame((s) => s.toggleAccessory);
   const isPro = useIsPro();
 
   const now = new Date();
@@ -74,64 +73,63 @@ export default function SproutScreen() {
         <Creature mood={creatureMood(items, now)} level={g.stage.level} equipped={equipped} />
 
         <View style={styles.block}>
-          <View style={styles.between}>
-            <ThemedText type="smallBold">
-              Lv {g.stage.level} · {g.stage.name}
+          <ThemedText type="mono" style={styles.center}>
+            <ThemedText type="mono" style={{ fontWeight: 700 }}>
+              lv {g.stage.level} · {g.stage.name.toLowerCase()}
             </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {g.next ? `${g.next.minXp - g.xp} XP to ${g.next.name}` : 'Fully grown 🌳'}
-            </ThemedText>
-          </View>
-          <ProgressBar progress={g.progress} color={theme.tint} />
-          <ThemedText type="small" themeColor="textSecondary">
-            +{XP_PER_RESCUED_UNIT} XP per item rescued · +{XP_PER_DONATED_UNIT} XP per item donated
+            {g.next ? `  ${g.next.minXp - g.xp} xp to ${g.next.name.toLowerCase()}` : '  fully grown'}
           </ThemedText>
+          <PixelBar progress={g.progress} />
           <View style={styles.stages}>
             {STAGES.map((s) => (
               <ThemedText
                 key={s.level}
-                type="small"
-                style={{ opacity: s.level <= g.stage.level ? 1 : 0.35, fontWeight: s.level === g.stage.level ? 700 : 500 }}>
-                {s.level <= g.stage.level ? '●' : '○'} {s.name}
+                type="mono"
+                themeColor={s.level <= g.stage.level ? 'text' : 'textSecondary'}
+                style={[styles.tiny, s.level === g.stage.level && { fontWeight: 700 }]}>
+                {s.level <= g.stage.level ? '■' : '□'} {s.name.toLowerCase()}
               </ThemedText>
             ))}
           </View>
+          <ThemedText type="mono" themeColor="textSecondary" style={[styles.center, styles.tiny]}>
+            +{XP_PER_RESCUED_UNIT} xp per item rescued · +{XP_PER_DONATED_UNIT} per item donated
+          </ThemedText>
         </View>
 
-        <View style={styles.statsRow}>
-          <Stat value={`🔥 ${wasteFreeStreak(items, now, startedAt)}`} label="days waste-free" />
-          <Stat value={`🎯 ${Math.min(saves, WEEKLY_GOAL)}/${WEEKLY_GOAL}`} label="saves this week" />
-          <Stat value={`🏆 ${weeklyGoalStreak(items, now)}`} label="goal weeks in a row" />
+        <View style={styles.row}>
+          <Stat value={`${wasteFreeStreak(items, now, startedAt)}`} label="🔥 days waste-free" />
+          <Stat value={`${Math.min(saves, WEEKLY_GOAL)}/${WEEKLY_GOAL}`} label="🎯 this week" />
+          <Stat value={`${weeklyGoalStreak(items, now)}`} label="🏆 goal weeks" />
         </View>
 
-        <ThemedText type="smallBold" style={styles.heading}>
-          Badges · {badges.length}/{BADGES.length}
+        <ThemedText type="mono" style={styles.heading}>
+          badges {badges.length}/{BADGES.length}
         </ThemedText>
         <View style={styles.grid}>
           {BADGES.map((b) => {
             const got = badges.includes(b.id);
             return (
-              <View key={b.id} style={[styles.badge, { backgroundColor: theme.backgroundElement, opacity: got ? 1 : 0.5 }]}>
-                <Text style={styles.badgeEmoji}>{got ? '🏅' : '🔒'}</Text>
-                <ThemedText type="smallBold" style={styles.center}>
-                  {b.title}
+              <View key={b.id} style={[styles.card, styles.badge, { borderColor: got ? theme.border : theme.backgroundSelected }]}>
+                <View style={styles.badgeArt}>
+                  <PixelGrid grid={buildAccessory(b.reward)} palette={got ? ACCESSORY_PALETTE : LOCKED_PALETTE} pixel={4} />
+                </View>
+                <ThemedText type="mono" style={[styles.center, { fontWeight: 700 }]} themeColor={got ? 'text' : 'textSecondary'}>
+                  {got ? '' : '🔒 '}
+                  {b.title.toLowerCase()}
                 </ThemedText>
                 <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
                   {b.description}
-                </ThemedText>
-                <ThemedText type="small" style={styles.center}>
-                  Unlocks {ACCESSORIES[b.reward].emoji}
                 </ThemedText>
               </View>
             );
           })}
         </View>
 
-        <ThemedText type="smallBold" style={styles.heading}>
-          Wardrobe
+        <ThemedText type="mono" style={styles.heading}>
+          wardrobe
         </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          Earn accessories with badges. Tap to put on or take off.
+        <ThemedText type="mono" themeColor="textSecondary" style={styles.tiny}>
+          tap to put on or take off. locked items come from badges, the shop or pro.
         </ThemedText>
         <View style={styles.wardrobe}>
           {Object.values(ACCESSORIES).map((a) => {
@@ -141,15 +139,12 @@ export default function SproutScreen() {
               <Pressable
                 key={a.id}
                 onPress={() => wear(a.id)}
-                accessibilityLabel={`${a.name}${has ? '' : a.proOnly ? ', Pro' : ', locked'}`}
-                style={[
-                  styles.accessory,
-                  { backgroundColor: theme.backgroundElement, borderColor: wearing ? theme.tint : 'transparent', opacity: has ? 1 : 0.4 },
-                ]}>
+                accessibilityLabel={`${a.name}${has ? (wearing ? ', wearing' : '') : a.proOnly ? ', Pro' : ', locked'}`}
+                style={[styles.accessory, { borderColor: wearing ? theme.tint : has ? theme.border : theme.backgroundSelected }]}>
                 <View style={styles.accessoryArt}>
-                  <PixelGrid grid={buildAccessory(a.id)} palette={ACCESSORY_PALETTE} pixel={4} />
+                  <PixelGrid grid={buildAccessory(a.id)} palette={has ? ACCESSORY_PALETTE : LOCKED_PALETTE} pixel={4} />
                 </View>
-                <ThemedText type="mono" style={[styles.center, { fontSize: 11 }]} numberOfLines={1}>
+                <ThemedText type="mono" style={[styles.center, styles.tiny]} numberOfLines={1} themeColor={has ? 'text' : 'textSecondary'}>
                   {has ? a.name.toLowerCase() : a.proOnly ? 'pro' : a.price !== undefined ? `🌱${a.price}` : '🔒'}
                 </ThemedText>
               </Pressable>
@@ -165,16 +160,17 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, gap: 12 },
   center: { textAlign: 'center' },
-  block: { gap: 8 },
-  between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  stages: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 2 },
-  statsRow: { flexDirection: 'row', gap: 8 },
-  stat: { flex: 1, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 6, alignItems: 'center' },
-  heading: { marginTop: 8 },
+  tiny: { fontSize: 12, lineHeight: 16 },
+  block: { gap: 6 },
+  stages: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: 10 },
+  row: { flexDirection: 'row', gap: 8 },
+  card: { borderWidth: 1.5, borderRadius: 6 },
+  stat: { flex: 1, paddingVertical: 10, paddingHorizontal: 4, alignItems: 'center' },
+  heading: { marginTop: 8, fontWeight: 700 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  badge: { width: '48.5%', borderRadius: 14, padding: 12, alignItems: 'center', gap: 2 },
-  badgeEmoji: { fontSize: 28 },
+  badge: { width: '48.5%', padding: 10, alignItems: 'center', gap: 4 },
+  badgeArt: { height: 44, justifyContent: 'center' },
   wardrobe: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  accessory: { width: '18.5%', minWidth: 58, paddingVertical: 8, borderRadius: 6, borderWidth: 2, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  accessory: { width: '18.5%', minWidth: 58, paddingVertical: 8, borderRadius: 6, borderWidth: 1.5, alignItems: 'center', gap: 4 },
   accessoryArt: { height: 40, justifyContent: 'center' },
 });
