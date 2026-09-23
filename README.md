@@ -124,7 +124,7 @@ Built on RevenueCat: one `pro` entitlement, one offering (monthly and annual), a
 
 **No developer account needed.** Purchases run against RevenueCat's **Test Store**, so the full purchase flow works on a development build and in the browser preview, without App Store Connect or Play Console.
 
-**For judges: admin mode.** To try everything without a purchase, open the **Impact** tab, tap **"judges & testing: admin mode →"** at the bottom, and enter the code **`shipaton`**. (Long-pressing the GO PRO pill opens the same screen.) It turns on every Pro feature and unlocks every outfit for Sprout, including badge rewards, shop items and out-of-season ones, all free to put on and swap. The code is public on purpose. The app is never shipped to a store, so this is a demo convenience, and it would be removed before any real release.
+**For judges: admin mode.** To try everything without a purchase, open the **Impact** tab, tap **"judges & testing: admin mode →"** at the bottom, and enter the password **`Admin-demo`** (not case-sensitive). (Long-pressing the GO PRO pill opens the same screen.) It turns on every Pro feature and unlocks every outfit for Sprout, including badge rewards, shop items and out-of-season ones, all free to put on and swap. The password is public on purpose. The app is never shipped to a store, so this is a demo convenience, and it would be removed before any real release.
 
 ## Tech
 

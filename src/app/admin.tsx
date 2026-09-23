@@ -6,7 +6,7 @@ import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
-import { ADMIN_CODE, useProSource, useProState } from '@/lib/purchases';
+import { useProSource, useProState } from '@/lib/purchases';
 
 /** Admin mode for judges: Pro on and every outfit unlocked, no purchase needed. Linked from the Impact tab. */
 export default function AdminScreen() {
@@ -20,7 +20,7 @@ export default function AdminScreen() {
 
   const submit = () => {
     if (unlockAdmin(key)) router.back();
-    else setError(`That's not it. The code is "${ADMIN_CODE}".`);
+    else setError("That password doesn't match. It's in the README under \"For judges\".");
   };
 
   return (
@@ -42,8 +42,8 @@ export default function AdminScreen() {
         <Button label="Turn off admin mode" variant="outline" onPress={clearAdmin} />
       ) : (
         <>
-          <ThemedText type="mono">
-            code: <ThemedText type="mono" style={{ fontWeight: 700 }}>{ADMIN_CODE}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Judges: the password is in the README, under &quot;For judges&quot;.
           </ThemedText>
           <TextInput
             value={key}
@@ -51,7 +51,7 @@ export default function AdminScreen() {
               setKey(text);
               setError(null);
             }}
-            placeholder="type the code"
+            placeholder="admin password"
             placeholderTextColor={theme.textSecondary}
             autoCapitalize="none"
             autoCorrect={false}

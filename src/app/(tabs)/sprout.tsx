@@ -28,9 +28,18 @@ import {
   XP_PER_DONATED_UNIT,
   XP_PER_RESCUED_UNIT,
   type AccessoryId,
+  type Slot,
 } from '@/lib/rules/progress';
 import { useGame } from '@/store/game';
 import { useItems } from '@/store/items';
+
+/** Wardrobe groups, one per slot: only one accessory per slot can be worn at once. */
+const WARDROBE_SLOTS: { slot: Slot; title: string }[] = [
+  { slot: 'head', title: '🎩 hats' },
+  { slot: 'face', title: '👓 face' },
+  { slot: 'neck', title: '🧣 neck' },
+  { slot: 'float', title: '✨ floating' },
+];
 
 const ACCESSORY_PALETTE = palette('content');
 const LOCKED_PALETTE = Object.fromEntries(Object.keys(ACCESSORY_PALETTE).map((k) => [k, '#C9C9C2']));
@@ -140,28 +149,47 @@ export default function SproutScreen() {
           wardrobe
         </ThemedText>
         <ThemedText type="mono" themeColor="textSecondary" style={styles.tiny}>
-          tap to put on or take off. locked items come from badges, the shop or pro.
+          one per group at a time — putting one on swaps out the other. tap again to take it off. locked items come from
+          badges, the shop or pro.
         </ThemedText>
-        <View style={styles.wardrobe}>
-          {Object.values(ACCESSORIES).map((a) => {
-            const has = unlocked.includes(a.id);
-            const wearing = equipped[a.slot] === a.id;
-            return (
-              <Pressable
-                key={a.id}
-                onPress={() => wear(a.id)}
-                accessibilityLabel={`${a.name}${has ? (wearing ? ', wearing' : '') : a.proOnly ? ', Pro' : ', locked'}`}
-                style={[styles.accessory, { borderColor: wearing ? theme.tint : has ? theme.border : theme.backgroundSelected }]}>
-                <View style={styles.accessoryArt}>
-                  <PixelGrid grid={buildAccessory(a.id)} palette={has ? ACCESSORY_PALETTE : LOCKED_PALETTE} pixel={4} />
-                </View>
-                <ThemedText type="mono" style={[styles.center, styles.tiny]} numberOfLines={1} themeColor={has ? 'text' : 'textSecondary'}>
-                  {has ? a.name.toLowerCase() : a.proOnly ? 'pro' : a.season ? 'seasonal' : a.price !== undefined ? `🌱${a.price}` : '🔒'}
+        {WARDROBE_SLOTS.map(({ slot, title }) => {
+          const worn = equipped[slot];
+          return (
+            <View key={slot} style={styles.slot}>
+              <ThemedText type="mono" style={styles.tiny}>
+                <ThemedText type="mono" style={[styles.tiny, { fontWeight: 700 }]}>
+                  {title}
                 </ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
+                <ThemedText type="mono" themeColor="textSecondary" style={styles.tiny}>
+                  {'  ·  '}
+                  {worn ? `wearing ${ACCESSORIES[worn].name.toLowerCase()}` : 'nothing on'}
+                </ThemedText>
+              </ThemedText>
+              <View style={styles.wardrobe}>
+                {Object.values(ACCESSORIES)
+                  .filter((a) => a.slot === slot)
+                  .map((a) => {
+                    const has = unlocked.includes(a.id);
+                    const wearing = worn === a.id;
+                    return (
+                      <Pressable
+                        key={a.id}
+                        onPress={() => wear(a.id)}
+                        accessibilityLabel={`${a.name}${has ? (wearing ? ', wearing' : '') : a.proOnly ? ', Pro' : ', locked'}`}
+                        style={[styles.accessory, { borderColor: wearing ? theme.tint : has ? theme.border : theme.backgroundSelected }]}>
+                        <View style={styles.accessoryArt}>
+                          <PixelGrid grid={buildAccessory(a.id)} palette={has ? ACCESSORY_PALETTE : LOCKED_PALETTE} pixel={4} />
+                        </View>
+                        <ThemedText type="mono" style={[styles.center, styles.tiny]} numberOfLines={1} themeColor={has ? 'text' : 'textSecondary'}>
+                          {has ? a.name.toLowerCase() : a.proOnly ? 'pro' : a.season ? 'seasonal' : a.price !== undefined ? `🌱${a.price}` : '🔒'}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+              </View>
+            </View>
+          );
+        })}
       </ScrollView>
     </ThemedView>
   );
@@ -182,6 +210,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   badge: { width: '48.5%', padding: 10, alignItems: 'center', gap: 4 },
   badgeArt: { height: 44, justifyContent: 'center' },
+  slot: { gap: 6 },
   wardrobe: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   accessory: { width: '18.5%', minWidth: 58, paddingVertical: 8, borderRadius: 6, borderWidth: 1.5, alignItems: 'center', gap: 4 },
   accessoryArt: { height: 40, justifyContent: 'center' },

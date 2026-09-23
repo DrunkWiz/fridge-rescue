@@ -18,11 +18,11 @@ const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY?.trim();
 
 /**
  * Admin mode for judges and testing: Pro on, every outfit unlocked and free to swap.
- * The code is deliberately simple and published in the README, because judges need
+ * The password is deliberately simple and published in the README, because judges need
  * to reach every feature without buying anything. This app is never shipped to a
  * store (Next Gen track), so it works in every build; remove it before any real release.
  */
-export const ADMIN_CODE = 'shipaton';
+export const ADMIN_CODE = 'Admin-demo';
 
 type ProState = {
   configured: boolean;
@@ -44,7 +44,7 @@ export const useProState = create<ProState>()(
       adminOverride: false,
       setCustomerInfo: (info) => set({ entitled: info.entitlements.active[ENTITLEMENT_ID] !== undefined }),
       unlockAdmin: (key) => {
-        const ok = key.trim().toLowerCase() === ADMIN_CODE;
+        const ok = key.trim().toLowerCase() === ADMIN_CODE.toLowerCase();
         if (ok) set({ adminOverride: true });
         return ok;
       },
