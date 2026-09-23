@@ -64,7 +64,9 @@ export function CelebrationOverlay() {
 
   return (
     <Modal transparent visible animationType="fade" onRequestClose={dismiss}>
-      <Pressable style={styles.backdrop} onPress={dismiss}>
+      <View style={styles.backdrop}>
+        {/* Tap-outside-to-close sits behind the card, so taps on the card's buttons never reach it. */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={dismiss} accessibilityLabel="Close" />
         {(win || moment.kind === 'bought') && <Confetti />}
         <Animated.View
           entering={ZoomIn.springify().damping(12)}
@@ -151,14 +153,14 @@ export function CelebrationOverlay() {
             </>
           )}
         </Animated.View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  card: { width: '100%', maxWidth: 360, borderRadius: 8, borderWidth: 2, padding: 24, alignItems: 'center', gap: 10 },
+  card: { width: '88%', maxWidth: 360, borderRadius: 8, borderWidth: 2, padding: 24, alignItems: 'center', gap: 10 },
   smallCard: { maxWidth: 300 },
   bigEmoji: { fontSize: 56 },
   center: { textAlign: 'center' },

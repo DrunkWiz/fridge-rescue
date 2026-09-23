@@ -42,10 +42,9 @@ export function Creature({ mood, level = 1, equipped = {}, onPress, size = 'larg
   const key = accessories.join(',');
   const grid = useMemo(() => buildSprout(mood, level, key ? (key.split(',') as AccessoryId[]) : []), [mood, level, key]);
   const pixel = pixelForLevel(level, size);
-  // Fixed frame (sized for the largest stage) so growing never shifts the layout,
-  // and the cross-fading sprites can stack absolutely inside it.
-  const maxPixel = size === 'small' ? 4 : 9;
-  const frame = { width: WIDTH * maxPixel, height: HEIGHT * maxPixel };
+  // Frame fits the current stage (it only changes on a level-up); the cross-fading
+  // sprites stack absolutely inside it.
+  const frame = { width: WIDTH * pixel, height: HEIGHT * pixel };
 
   // Mood change or level-up: a quick pop.
   useEffect(() => {
