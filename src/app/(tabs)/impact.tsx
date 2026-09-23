@@ -10,6 +10,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { useIsPro } from '@/lib/purchases';
 import { creatureMood, lifetimeImpact } from '@/lib/rules/creature';
 import { historyToCsv, monthlyHistory, unitsToMeals } from '@/lib/rules/impact';
+import { growth, totalXp } from '@/lib/rules/progress';
+import { useGame } from '@/store/game';
 import { useItems } from '@/store/items';
 
 function monthLabel(key: string): string {
@@ -35,6 +37,7 @@ export default function ImpactScreen() {
   const insets = useSafeAreaInsets();
   const items = useItems((s) => s.items);
   const isPro = useIsPro();
+  const equipped = useGame((s) => s.equipped);
 
   const impact = lifetimeImpact(items);
   const history = monthlyHistory(items);
@@ -55,22 +58,22 @@ export default function ImpactScreen() {
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
         {/* The shareable card — and the closing shot of the demo video. */}
-        <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
-          <Creature mood={mood} />
+        <View style={[styles.card, { borderColor: theme.border }]}>
+          <Creature mood={mood} level={growth(totalXp(items)).stage.level} equipped={equipped} />
           <View style={styles.counters}>
             <View style={styles.counter}>
-              <ThemedText type="title" style={{ color: theme.tint }}>
+              <ThemedText type="monoLarge" style={{ color: theme.tint, fontSize: 40, lineHeight: 48 }}>
                 {impact.mealsRescued}
               </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
+              <ThemedText type="mono" themeColor="textSecondary">
                 meals rescued
               </ThemedText>
             </View>
             <View style={styles.counter}>
-              <ThemedText type="title" style={{ color: theme.tint }}>
+              <ThemedText type="monoLarge" style={{ color: theme.tint, fontSize: 40, lineHeight: 48 }}>
                 {impact.mealsDonated}
               </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
+              <ThemedText type="mono" themeColor="textSecondary">
                 meals donated
               </ThemedText>
             </View>
@@ -78,8 +81,8 @@ export default function ImpactScreen() {
         </View>
         <Button label="Share my impact" onPress={share} />
 
-        <ThemedText type="smallBold" style={styles.heading}>
-          History
+        <ThemedText type="mono" style={[styles.heading, { fontWeight: 700 }]}>
+          history
         </ThemedText>
 
         {!isPro ? (
@@ -118,7 +121,7 @@ export default function ImpactScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, gap: 12 },
-  card: { borderRadius: 24, paddingVertical: 24, alignItems: 'center', gap: 16 },
+  card: { borderRadius: 6, borderWidth: 2, paddingVertical: 24, alignItems: 'center', gap: 16 },
   counters: { flexDirection: 'row', alignSelf: 'stretch' },
   counter: { flex: 1, alignItems: 'center' },
   heading: { marginTop: 12 },
