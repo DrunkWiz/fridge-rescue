@@ -22,7 +22,7 @@ const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY?.trim();
  * to reach every feature without buying anything. This app is never shipped to a
  * store (Next Gen track), so it works in every build; remove it before any real release.
  */
-export const ADMIN_CODE = 'Admin-demo';
+export const ADMIN_CODE = 'admin';
 
 type ProState = {
   configured: boolean;

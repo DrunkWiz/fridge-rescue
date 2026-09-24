@@ -7,7 +7,7 @@
 - `@types/node` is a devDependency purely so the test file typechecks.
 - Extra deps beyond section 5: `@anthropic-ai/sdk` (the one recipe call), `react-native-purchases-ui` (RevenueCat Paywalls, required by section 6) and `react-native-google-mobile-ads` (opt-in rewarded ads, section 6's optional second monetization method; events go to RevenueCat's ad tracker; uses Google's test app/unit IDs).
 - Testing happens in the browser preview (Expo web target) — keep it working. Native-only modules need a web path: RevenueCat uses its browser mode with a Test Store key; expo-camera and expo-location have web implementations.
-- Pro = RevenueCat `pro` entitlement OR admin mode (password `Admin-demo`, `ADMIN_CODE` in `src/lib/purchases`; linked from the Impact tab and long-press on the Pro pill). Admin mode works in every build (judges use it) and also unlocks every outfit.
+- Pro = RevenueCat `pro` entitlement OR admin mode (password `admin`, `ADMIN_CODE` in `src/lib/purchases`; linked from the Impact tab and long-press on the Pro pill). Admin mode works in every build (judges use it) and also unlocks every outfit.
 
 ---
 
