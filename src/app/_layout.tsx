@@ -1,5 +1,6 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -55,6 +56,8 @@ export default function RootLayout() {
       </Stack>
       {/* Celebrations can be triggered from any screen, so they live above the navigator. */}
       <CelebrationOverlay />
+      {/* Dark icons on the light theme, light on dark; without this Android drew white icons on white. */}
+      <StatusBar style="auto" />
     </ThemeProvider>
     </GestureHandlerRootView>
   );

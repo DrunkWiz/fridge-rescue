@@ -4,7 +4,7 @@
 
 Built with React Native + Expo for the RevenueCat Shipaton 2026 (Next Gen Award).
 
-<!-- TODO: hero screenshot (1179 × 2556, no device frame) -->
+<p align="center"><img src="docs/screenshots/01-home.png" width="300" alt="Fridge Rescue home screen: Sprout the pixel pet above what to use soon, with rescue and donate cards"></p>
 
 ---
 
@@ -27,7 +27,13 @@ Existing trackers (Fridgi, EatSpoiler, FreshSave, FridgeUp, Use By, FridgeSmart�
 ## Demo
 
 <!-- TODO: YouTube link (under 2 minutes) -->
-<!-- TODO: 3–4 screenshots: home with creature · rescue recipe · donation box · paywall -->
+| Rescue | Donate | Sprout |
+|---|---|---|
+| <img src="docs/screenshots/02-rescue.png" width="240" alt="Rescue: one recipe from the food about to expire"> | <img src="docs/screenshots/03-donate.png" width="240" alt="Donation box: 8 spare items, about 6 meals for someone"> | <img src="docs/screenshots/04-sprout.png" width="240" alt="Sprout: growth, streak, money saved, daily stars and badges"> |
+
+| Shop | Impact |
+|---|---|
+| <img src="docs/screenshots/05-shop.png" width="240" alt="Shop: opt-in rewarded ad for seeds, full outfits"> | <img src="docs/screenshots/06-impact.png" width="240" alt="Impact: meals rescued and donated, money saved, meal diary"> |
 
 ## How it works
 
