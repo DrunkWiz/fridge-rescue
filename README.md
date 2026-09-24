@@ -94,7 +94,7 @@ The app is only useful if it's opened *before* food goes off, so the game layer 
 | **Growth** | Sprout grows from Seed to Ancient Tree: bigger, leafier, then blossoming | +10 XP per item rescued, +25 per item donated ([`progress.ts`](src/lib/rules/progress.ts)) |
 | **Waste-free streak** 🔥 | Days in a row without wasting food | Resets on binned food. Expired food isn't assumed wasted: the app asks **"did you eat it?"** first, and only counts it after `EXPIRED_GRACE_DAYS` (2) unanswered. Counts from when you started, so backdated items can't grant an unearned streak |
 | **Badges → wardrobe** 🏅 | 8 badges, each unlocking a pixel accessory for Sprout (cap, scarf, crown, sunglasses…) | Cosmetics are **earned, not bought**; two extra are Pro |
-| **Seeds + shop** 🌱 | In-game currency spent in the Shop tab: 40 items in six groups (hats, face, neck, floating, pals that sit beside Sprout, and backdrops drawn behind it). One item per group at a time | +2 per item rescued, +5 per item donated, +1 per daily fridge check, +10 per badge, plus weekly challenge rewards. **Seeds can't be bought with money** |
+| **Seeds + shop** 🌱 | In-game currency spent in the Shop tab: 46 items in seven groups: **full outfits** (T-rex, frog, penguin, strawberry, avocado, astronaut) that recolour Sprout's whole body, hats, face, neck, floating, pals that sit beside Sprout, and backdrops drawn behind it. One item per group at a time | +2 per item rescued, +5 per item donated, +1 per daily fridge check, +10 per badge, +20 per growth stage, +3 per meal-diary photo, +3 for skipping a double-buy on the shopping list, +5 for sharing your impact (weekly), weekly challenge rewards, and an optional rewarded ad (below). **Seeds can't be bought with money** |
 | **Daily stars** ⭐ | Opening your fridge each day counts automatically (no fake "check-in" tap); the last 7 days show as ⭐ opened / 🌟 saved food | The habit that actually prevents waste, made visible |
 | **Weekly challenge** 🎯 | The one weekly goal: a new challenge every Monday ("rescue 3 fruit & veg", "make a donation"…) for bonus seeds | Same challenge for everyone each week, so it could become social later |
 | **Meal diary** 📸 | Every rescue lands in a diary on the Impact tab, with an optional photo of what you cooked | A scrapbook of meals that would have been waste; photos are copied into app storage so they survive |
@@ -116,7 +116,17 @@ Built on RevenueCat: one `pro` entitlement, one offering (monthly and annual), a
 | Add by hand or barcode, plus 3 photo scans a month | **Unlimited** receipt / shopping photo scans |
 | Expiry tracking + basic recipes | AI recipes from exactly what's expiring |
 | **Full donation flow** | Month-by-month impact history + CSV export |
-| The creature + shareable impact counters | |
+| The creature + shareable impact counters | Pro-only outfits (astronaut, cat, night sky…) |
+| Optional rewarded ads: +10 seeds, 3 a day | The same daily bonus, **no ads** |
+
+**Second revenue stream: opt-in rewarded ads, tracked in RevenueCat.** In the Shop, free users can watch a short AdMob rewarded ad for **+10 seeds, up to 3 a day**. Every ad event (loaded, shown, clicked, paid) is reported through RevenueCat's ad tracker (`Purchases.adTracker`, [`src/lib/ads`](src/lib/ads)), so ad revenue and subscription revenue sit in one dashboard. The rules keep it fair:
+
+- **Never forced.** No banners or interstitials; an ad only plays when you tap "watch".
+- **Capped.** 3 a day, so it's a bonus, not a grind, and seeds still mostly come from saving food.
+- **Pro skips the ad.** Subscribers collect the same bonus with one tap: skipping ads is a subscription perk, which links the two revenue streams.
+- **Seeds are never sold.** Neither ads nor money buy progress directly; ads only speed up cosmetics.
+
+The build uses Google's official **test ad unit**, so no AdMob account is needed and no real ad money moves. A real unit goes in `EXPO_PUBLIC_ADMOB_REWARDED_ID`. The browser preview simulates the ad, since AdMob has no web SDK.
 
 **Why the social good is free.** Rescuing and donating are the point of the app, so they're never behind the paywall. Pro charges for convenience (more items, better recipes) and for looking back at your record (history, export). Putting "donate to a food bank" behind a subscription would be indefensible, and it would shrink the number of people doing it.
 

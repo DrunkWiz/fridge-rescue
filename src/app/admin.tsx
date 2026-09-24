@@ -7,6 +7,18 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
 import { useProSource, useProState } from '@/lib/purchases';
+import { earnedBadges, unlockedAccessories } from '@/lib/rules/progress';
+import { useGame } from '@/store/game';
+import { useItems } from '@/store/items';
+
+/** Leaving admin mode: back to what this user has really earned, bought or unlocked with Pro. */
+function turnOffAdmin() {
+  useProState.getState().clearAdmin();
+  const { items, startedAt } = useItems.getState();
+  const isPro = useProState.getState().entitled;
+  const owned = unlockedAccessories(earnedBadges(items, new Date(), startedAt), isPro, useGame.getState().bought);
+  useGame.getState().keepOnly(owned);
+}
 
 /** Admin mode for judges: Pro on and every outfit unlocked, no purchase needed. Linked from the Impact tab. */
 export default function AdminScreen() {
@@ -14,7 +26,6 @@ export default function AdminScreen() {
   const source = useProSource();
   const admin = useProState((s) => s.adminOverride);
   const unlockAdmin = useProState((s) => s.unlockAdmin);
-  const clearAdmin = useProState((s) => s.clearAdmin);
   const [key, setKey] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +50,7 @@ export default function AdminScreen() {
       </ThemedText>
 
       {admin ? (
-        <Button label="Turn off admin mode" variant="outline" onPress={clearAdmin} />
+        <Button label="Turn off admin mode" variant="outline" onPress={turnOffAdmin} />
       ) : (
         <>
           <ThemedText type="small" themeColor="textSecondary">

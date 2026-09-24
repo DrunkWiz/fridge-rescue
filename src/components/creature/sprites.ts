@@ -231,6 +231,66 @@ export const ACCESSORY_PIXELS: Partial<Record<AccessoryId, Px[]>> = {
   bee: [[6, 13, 'A'], [6, 14, 'A'], [7, 12, 'K'], [7, 13, 'y'], [7, 14, 'K'], [7, 15, 'y'], [8, 13, 'y'], [8, 14, 'K']],
 };
 
+/**
+ * Full outfits recolour the whole body (`fill` replaces the body colour) and add
+ * features on top. Sprout's face stays visible, so moods still show. While one
+ * is on, hats, face and neck items aren't drawn.
+ */
+export const OUTFITS: Partial<Record<AccessoryId, { fill: string; px: Px[] }>> = {
+  trex: {
+    fill: 'X',
+    px: [
+      [4, 5, 'o'], [5, 5, 'o'], [3, 7, 'o'], [3, 8, 'o'], [4, 7, 'o'], [4, 8, 'o'], [5, 7, 'o'], [5, 8, 'o'], [4, 10, 'o'], [5, 10, 'o'],
+      [16, 1, 'X'], [17, 0, 'X'], [17, 1, 'X'], [18, 0, 'X'],
+      ...row(16, 5, 10, 'Y'), ...row(17, 5, 10, 'Y'), ...row(18, 6, 9, 'Y'),
+    ],
+  },
+  frog: {
+    fill: 'G',
+    px: [
+      [4, 4, 'k'], [4, 5, 'k'], [5, 3, 'k'], [5, 4, 'w'], [5, 5, 'w'], [5, 6, 'k'], [6, 3, 'k'], [6, 4, 'w'], [6, 5, 'K'], [6, 6, 'k'],
+      [4, 10, 'k'], [4, 11, 'k'], [5, 9, 'k'], [5, 10, 'w'], [5, 11, 'w'], [5, 12, 'k'], [6, 9, 'k'], [6, 10, 'K'], [6, 11, 'w'], [6, 12, 'k'],
+      ...row(16, 5, 10, 'L'), ...row(17, 5, 10, 'L'), ...row(18, 6, 9, 'L'),
+    ],
+  },
+  penguin: {
+    fill: 'n',
+    px: [
+      ...[10, 11, 12, 13, 14, 15].flatMap((r) => row(r, 4, 11, 'w')),
+      ...row(16, 5, 10, 'w'), ...row(17, 5, 10, 'w'), ...row(18, 6, 9, 'w'),
+      [13, 7, 'o'], [13, 8, 'o'],
+      [19, 4, 'o'], [19, 5, 'o'], [19, 10, 'o'], [19, 11, 'o'],
+    ],
+  },
+  strawberry: {
+    fill: 'r',
+    px: [
+      [3, 7, 's'], [4, 7, 's'], [4, 6, 'G'], [4, 9, 'G'], ...row(5, 5, 10, 'G'), [6, 4, 'G'], [6, 5, 'G'], [6, 10, 'G'], [6, 11, 'G'],
+      [8, 6, 'Y'], [8, 9, 'Y'], [10, 3, 'Y'], [10, 12, 'Y'], [15, 2, 'Y'], [16, 4, 'Y'], [16, 11, 'Y'], [17, 7, 'Y'], [18, 9, 'Y'],
+    ],
+  },
+  avocado: {
+    fill: 'J',
+    px: [
+      ...row(8, 5, 10, 'I'), ...row(9, 4, 11, 'I'), ...row(10, 4, 11, 'I'),
+      ...[11, 12, 13, 14, 15].flatMap((r) => row(r, 3, 12, 'I')),
+      ...row(16, 4, 11, 'I'), ...row(17, 4, 11, 'I'), ...row(18, 6, 9, 'I'),
+      [16, 7, 'M'], [16, 8, 'M'], [17, 6, 'M'], [17, 7, 'M'], [17, 8, 'M'], [17, 9, 'M'], [18, 7, 'M'], [18, 8, 'M'],
+    ],
+  },
+  astronaut: {
+    fill: 'w',
+    px: [
+      [3, 7, 'r'], [4, 7, 'H'], [5, 7, 'H'],
+      ...row(9, 4, 11, 'H'),
+      ...[10, 11, 12, 13, 14, 15].flatMap((r) => row(r, 3, 12, 'A')),
+      [10, 3, 'H'], [10, 12, 'H'],
+      ...row(16, 3, 12, 'H'),
+      [17, 5, 'r'], [17, 6, 'r'], [17, 9, 'b'], [17, 10, 'b'],
+    ],
+  },
+};
+
 /** Pals sit on the ground to Sprout's left, in a 5 × 5 box (local coordinates). */
 export const PAL_PIXELS: Partial<Record<AccessoryId, Px[]>> = {
   chick: [...row(1, 1, 3, 'y'), [2, 0, 'y'], [2, 1, 'y'], [2, 2, 'K'], [2, 3, 'y'], [2, 4, 'o'], ...row(3, 0, 3, 'y'), [4, 1, 'o'], [4, 3, 'o']],
@@ -306,9 +366,9 @@ export const BACKDROPS: Partial<Record<AccessoryId, () => Grid>> = {
 
 export const isBackdrop = (id: AccessoryId) => BACKDROPS[id] !== undefined;
 
-/** Pixel size for shop and wardrobe tiles: backdrops are whole scenes, so they draw smaller. */
+/** Pixel size for shop and wardrobe tiles: backdrops and full outfits are whole pictures, so they draw smaller. */
 export function tilePixel(id: AccessoryId, base: number): number {
-  return isBackdrop(id) ? Math.max(2, Math.floor(base / 2)) : base;
+  return isBackdrop(id) || OUTFITS[id] ? Math.max(2, Math.floor(base / 2)) : base;
 }
 
 /** A pal on its own 5 × 5 grid, to lay over the scene at PAL_ORIGIN. */
@@ -332,8 +392,11 @@ function paint(grid: Grid, pixels: Px[]) {
 
 export function buildSprout(mood: CreatureMood, level: number, accessories: AccessoryId[]): Grid {
   const grid = blank();
-  BODY.forEach((row, r) => [...row].forEach((ch, c) => (grid[r + 6][c] = ch)));
-  if (!accessories.some((a) => HEAD_HIDES_FOLIAGE.includes(a))) paint(grid, foliage(level, mood === 'wilting'));
+  const outfitId = accessories.find((a) => OUTFITS[a]);
+  const outfit = outfitId ? OUTFITS[outfitId] : undefined;
+  BODY.forEach((line, r) => [...line].forEach((ch, c) => (grid[r + 6][c] = outfit && ch === 'g' ? outfit.fill : ch)));
+  if (outfit) paint(grid, outfit.px);
+  else if (!accessories.some((a) => HEAD_HIDES_FOLIAGE.includes(a))) paint(grid, foliage(level, mood === 'wilting'));
   paint(grid, CHEEKS);
   paint(grid, FACES[mood]);
   if (mood === 'celebrating') paint(grid, SPARKLES);
@@ -345,6 +408,7 @@ export function buildSprout(mood: CreatureMood, level: number, accessories: Acce
 export function buildAccessory(id: AccessoryId): Grid {
   const backdrop = BACKDROPS[id];
   if (backdrop) return backdrop();
+  if (OUTFITS[id]) return buildSprout('content', 1, [id]);
   const px = ACCESSORY_PIXELS[id] ?? PAL_PIXELS[id] ?? [];
   const rows = px.map(([r]) => r);
   const cols = px.map(([, c]) => c);
@@ -398,5 +462,9 @@ export function palette(mood: CreatureMood): Record<string, string> {
     V: '#8E6CCF', // violet
     Y: '#FFF1B8', // pale yellow
     Z: '#DCE9F5', // snowy sky
+    // Full outfits
+    I: '#D8E8A0', // avocado flesh
+    J: '#3F6B2A', // avocado skin
+    X: '#3E9B4F', // t-rex green
   };
 }

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { ACCESSORIES, BADGES, SLOTS, type AccessoryId } from '../../lib/rules/progress.ts';
-import { ACCESSORY_PIXELS, BACKDROPS, HEIGHT, PAL_PIXELS, SCENE_HEIGHT, SCENE_WIDTH, WIDTH } from './sprites.ts';
+import { ACCESSORY_PIXELS, BACKDROPS, HEIGHT, OUTFITS, PAL_PIXELS, SCENE_HEIGHT, SCENE_WIDTH, WIDTH } from './sprites.ts';
 
 const ids = Object.keys(ACCESSORIES) as AccessoryId[];
 
@@ -20,7 +20,11 @@ describe('wardrobe', () => {
   it('has in-bounds pixel art for every item, drawn the way its slot needs', () => {
     for (const id of ids) {
       const { slot } = ACCESSORIES[id];
-      if (slot === 'backdrop') {
+      if (slot === 'outfit') {
+        const outfit = OUTFITS[id];
+        assert.ok(outfit?.px.length, `${id} has no outfit art`);
+        assert.ok(outfit.px.every(([r, c]) => r >= 0 && r < HEIGHT && c >= 0 && c < WIDTH), `${id} is off the sprite`);
+      } else if (slot === 'backdrop') {
         const grid = BACKDROPS[id]?.();
         assert.ok(grid, `${id} has no backdrop`);
         assert.equal(grid.length, SCENE_HEIGHT);

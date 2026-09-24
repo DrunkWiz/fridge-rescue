@@ -102,11 +102,13 @@ export type AccessoryId =
   | 'apron' | 'tie' | 'pearls'
   | 'balloon' | 'note' | 'bee'
   | 'chick' | 'snail' | 'ladybug' | 'cat'
-  | 'meadow' | 'kitchen' | 'beach' | 'sunset' | 'night' | 'autumn' | 'snowfall';
-export type Slot = 'head' | 'face' | 'neck' | 'float' | 'pal' | 'backdrop';
+  | 'meadow' | 'kitchen' | 'beach' | 'sunset' | 'night' | 'autumn' | 'snowfall'
+  | 'trex' | 'frog' | 'penguin' | 'strawberry' | 'avocado' | 'astronaut';
+export type Slot = 'outfit' | 'head' | 'face' | 'neck' | 'float' | 'pal' | 'backdrop';
 
-/** Wardrobe and shop groups, in display order. Sprout wears at most one item per slot. */
+/** Wardrobe and shop groups, in display order. Sprout wears at most one item per slot; a full outfit covers hats, face and neck items. */
 export const SLOTS: { slot: Slot; title: string }[] = [
+  { slot: 'outfit', title: '🦖 full outfits' },
   { slot: 'head', title: '🎩 hats' },
   { slot: 'face', title: '👓 face' },
   { slot: 'neck', title: '🧣 neck' },
@@ -164,6 +166,12 @@ export const ACCESSORIES: Record<AccessoryId, Accessory> = {
   sunset: { id: 'sunset', emoji: '🌇', name: 'Sunset', slot: 'backdrop', price: 60 },
   night: { id: 'night', emoji: '🌙', name: 'Night sky', slot: 'backdrop', proOnly: true },
   autumn: { id: 'autumn', emoji: '🍂', name: 'Autumn leaves', slot: 'backdrop', price: 40, season: HARVEST },
+  trex: { id: 'trex', emoji: '🦖', name: 'T-rex', slot: 'outfit', price: 120 },
+  frog: { id: 'frog', emoji: '🐸', name: 'Frog', slot: 'outfit', price: 80 },
+  penguin: { id: 'penguin', emoji: '🐧', name: 'Penguin', slot: 'outfit', price: 90 },
+  strawberry: { id: 'strawberry', emoji: '🍓', name: 'Strawberry', slot: 'outfit', price: 100 },
+  avocado: { id: 'avocado', emoji: '🥑', name: 'Avocado', slot: 'outfit', price: 100 },
+  astronaut: { id: 'astronaut', emoji: '👩‍🚀', name: 'Astronaut', slot: 'outfit', proOnly: true },
   snowfall: { id: 'snowfall', emoji: '❄️', name: 'Snowfall', slot: 'backdrop', price: 45, season: DECEMBER },
 };
 
@@ -275,6 +283,45 @@ export function seedsEarned(items: Item[], badges: BadgeId[], checkIns: string[]
 
 export function seedsSpent(bought: AccessoryId[]): number {
   return bought.reduce((n, id) => n + (ACCESSORIES[id].price ?? 0), 0);
+}
+
+// ── Bonus seeds: level-ups, diary photos, and a small log of one-off rewards ─
+
+/** Every growth stage reached pays out once. */
+export const SEEDS_PER_STAGE = 20;
+/** A photo of a rescued meal in the diary. */
+export const SEEDS_PER_DIARY_PHOTO = 3;
+
+export function stageSeeds(xp: number): number {
+  return (growth(xp).stage.level - 1) * SEEDS_PER_STAGE;
+}
+
+/**
+ * One-off rewards the fridge can't derive, so they're logged:
+ * - `ad`: watched an opt-in rewarded ad (Pro collects without the ad)
+ * - `skipped-buy`: took something off the shopping list because it's already at home
+ * - `share`: shared the impact card
+ * Each has a cap, so none of them can be farmed.
+ */
+export type SeedEventKind = 'ad' | 'skipped-buy' | 'share';
+export type SeedEvent = { kind: SeedEventKind; at: string };
+
+export const SEED_REWARDS: Record<SeedEventKind, { seeds: number; limit: number; per: 'day' | 'week' }> = {
+  ad: { seeds: 10, limit: 3, per: 'day' },
+  'skipped-buy': { seeds: 3, limit: 3, per: 'day' },
+  share: { seeds: 5, limit: 1, per: 'week' },
+};
+
+/** How many more times `kind` can pay out in the current day or week. */
+export function rewardsLeft(log: SeedEvent[], kind: SeedEventKind, now: Date): number {
+  const { limit, per } = SEED_REWARDS[kind];
+  const since = per === 'day' ? new Date(now.getFullYear(), now.getMonth(), now.getDate()) : weekStart(now);
+  const used = log.filter((e) => e.kind === kind && new Date(e.at) >= since).length;
+  return Math.max(0, limit - used);
+}
+
+export function loggedSeeds(log: SeedEvent[]): number {
+  return log.reduce((n, e) => n + SEED_REWARDS[e.kind].seeds, 0);
 }
 
 // ── Daily stars (one per day, like a habit tracker) ─────────────────────────

@@ -51,7 +51,10 @@ export default function ImpactScreen() {
 
   const share = async () => {
     try {
-      await Share.share({ message: shareText });
+      const result = await Share.share({ message: shareText });
+      if (result.action === Share.dismissedAction) return;
+      const seeds = useGame.getState().earnSeeds('share');
+      if (seeds) useGame.getState().showMoment({ kind: 'toast', text: `+${seeds} 🌱 for spreading the word` });
     } catch {
       // Web browsers without the Share API reject; nothing useful to do.
     }

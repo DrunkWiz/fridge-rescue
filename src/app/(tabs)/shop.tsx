@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Creature } from '@/components/creature/creature';
+import { EarnSeeds } from '@/components/earn-seeds';
 import { buildAccessory, palette, tilePixel } from '@/components/creature/sprites';
 import { PixelGrid } from '@/components/pixel-grid';
 import { ThemedText } from '@/components/themed-text';
@@ -14,9 +15,6 @@ import { creatureMood } from '@/lib/rules/creature';
 import {
   ACCESSORIES,
   growth,
-  SEEDS_PER_CHECK_IN,
-  SEEDS_PER_DONATED_UNIT,
-  SEEDS_PER_RESCUED_UNIT,
   SHOP,
   SLOTS,
   shopStock,
@@ -118,10 +116,7 @@ export default function ShopScreen() {
           </View>
         </View>
 
-        <ThemedText type="mono" themeColor="textSecondary">
-          earn seeds: +{SEEDS_PER_RESCUED_UNIT} per item rescued · +{SEEDS_PER_DONATED_UNIT} per item donated · +{SEEDS_PER_CHECK_IN} daily
-          fridge check · +10 per badge. seeds can&apos;t be bought.
-        </ThemedText>
+        <EarnSeeds />
 
         {SLOTS.map(({ slot, title }) => {
           const inSlot = stock.filter((a) => a.slot === slot);

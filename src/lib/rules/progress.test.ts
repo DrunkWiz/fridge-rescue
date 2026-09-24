@@ -27,6 +27,11 @@ import {
   EXPIRED_GRACE_DAYS,
   awaitingAnswer,
   XP_PER_RESCUED_UNIT,
+  loggedSeeds,
+  rewardsLeft,
+  SEED_REWARDS,
+  SEEDS_PER_STAGE,
+  stageSeeds,
 } from './progress.ts';
 
 // Wednesday 23 Sep 2026, midday
@@ -208,5 +213,26 @@ describe('weekly recap', () => {
     assert.deepEqual(recap, { rescued: 2, donated: 1, frozen: 0, wasted: 1 });
     assert.match(recapText(recap, 'pip'), /2 rescued, 1 donated, 1 binned\. more saved than binned/);
     assert.match(recapText({ rescued: 0, donated: 0, frozen: 0, wasted: 0 }, 'pip'), /quiet week/);
+  });
+});
+
+describe('bonus seeds', () => {
+  const at = (d: Date) => d.toISOString();
+
+  it('caps rewarded ads per day and shares per week', () => {
+    const day = new Date(2026, 8, 24, 12); // a Thursday
+    const ads = [0, 1, 2].map(() => ({ kind: 'ad' as const, at: at(new Date(2026, 8, 24, 9)) }));
+    assert.equal(rewardsLeft(ads, 'ad', day), 0);
+    assert.equal(rewardsLeft(ads, 'ad', new Date(2026, 8, 25, 9)), SEED_REWARDS.ad.limit, 'resets the next day');
+
+    const share = [{ kind: 'share' as const, at: at(new Date(2026, 8, 21, 10)) }]; // Monday
+    assert.equal(rewardsLeft(share, 'share', day), 0);
+    assert.equal(rewardsLeft(share, 'share', new Date(2026, 8, 28, 10)), 1, 'resets on Monday');
+  });
+
+  it('adds logged rewards and pays once per growth stage', () => {
+    assert.equal(loggedSeeds([{ kind: 'ad', at: '' }, { kind: 'skipped-buy', at: '' }]), SEED_REWARDS.ad.seeds + SEED_REWARDS['skipped-buy'].seeds);
+    assert.equal(stageSeeds(0), 0);
+    assert.equal(stageSeeds(STAGES[2].minXp), 2 * SEEDS_PER_STAGE);
   });
 });

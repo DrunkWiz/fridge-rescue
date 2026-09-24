@@ -51,8 +51,9 @@ export function Creature({ mood, level = 1, equipped = {}, onPress, size = 'larg
   const breathe = useSharedValue(1);
 
   // Pals and backdrops are drawn around Sprout, not on it.
-  const { pal, backdrop, ...worn } = equipped;
-  const accessories = Object.values(worn).filter(Boolean) as AccessoryId[];
+  // A full outfit covers hats, face and neck items; floating items still show.
+  const { pal, backdrop, outfit, float, ...worn } = equipped;
+  const accessories = (outfit ? [outfit, float] : [...Object.values(worn), float]).filter(Boolean) as AccessoryId[];
   const key = accessories.join(',');
   const backdropGrid = useMemo(() => (backdrop ? (BACKDROPS[backdrop]?.() ?? null) : null), [backdrop]);
   const palGrid = useMemo(() => (pal ? buildPal(pal) : null), [pal]);

@@ -9,15 +9,24 @@ import {
   dayKey,
   diffProgress,
   earnedBadges,
+  loggedSeeds,
+  rewardsLeft,
+  SEED_REWARDS,
+  SEEDS_PER_DIARY_PHOTO,
   seedsEarned,
   seedsSpent,
   snapshot,
+  stageSeeds,
+  totalXp,
+  type SeedEvent,
+  type SeedEventKind,
   type AccessoryId,
   type Celebration,
   type Slot,
 } from '@/lib/rules/progress';
 import { persistStorage, STORAGE_KEYS } from '@/lib/storage';
 import type { Item } from '@/lib/types';
+import { useDiary } from '@/store/diary';
 import { useItems } from '@/store/items';
 
 export type Moment =
@@ -36,6 +45,8 @@ type GameState = {
   /** Accessories bought in the shop with seeds. */
   bought: AccessoryId[];
   toggleAccessory: (id: AccessoryId) => void;
+  /** Takes off anything not in `owned` (e.g. admin-mode outfits once admin mode is off). */
+  keepOnly: (owned: AccessoryId[]) => void;
   /** Silent, automatic: the first time the fridge is looked at each day. */
   checkIn: () => void;
   /** Seen the first-launch intro. */
@@ -48,6 +59,10 @@ type GameState = {
   recordScan: () => void;
   /** Returns false if the user can't afford it. */
   buy: (id: AccessoryId) => boolean;
+  /** One-off seed rewards (ads, skipped double-buys, shares), capped per day or week. */
+  seedLog: SeedEvent[];
+  /** Pays out if there's room under the cap; returns the seeds earned (0 if capped). */
+  earnSeeds: (kind: SeedEventKind) => number;
   showMoment: (moment: Moment) => void;
   dismissMoment: () => void;
 };
@@ -60,6 +75,14 @@ export const useGame = create<GameState>()(
       checkIns: [],
       bought: [],
       scans: [],
+      seedLog: [],
+      earnSeeds: (kind) => {
+        const s = useGame.getState();
+        if (rewardsLeft(s.seedLog, kind, new Date()) === 0) return 0;
+        set({ seedLog: [...s.seedLog, { kind, at: new Date().toISOString() }] });
+        haptic('success');
+        return SEED_REWARDS[kind].seeds;
+      },
       onboarded: false,
       sproutName: '',
       finishOnboarding: (name) => set({ onboarded: true, sproutName: name.trim().slice(0, 16) }),
@@ -78,6 +101,10 @@ export const useGame = create<GameState>()(
         haptic('success');
         return true;
       },
+      keepOnly: (owned) =>
+        set((s) => ({
+          equipped: Object.fromEntries(Object.entries(s.equipped).filter(([, id]) => id && owned.includes(id))),
+        })),
       toggleAccessory: (id) =>
         set((s) => {
           const slot = ACCESSORIES[id].slot;
@@ -94,6 +121,7 @@ export const useGame = create<GameState>()(
         checkIns: s.checkIns,
         bought: s.bought,
         scans: s.scans,
+        seedLog: s.seedLog,
         onboarded: s.onboarded,
         sproutName: s.sproutName,
       }),
@@ -101,12 +129,36 @@ export const useGame = create<GameState>()(
   ),
 );
 
-/** Seeds earned minus spent. Earned is derived from the fridge, so it can't drift. */
+type BalanceInput = {
+  items: Item[];
+  startedAt: string | null;
+  checkIns: string[];
+  bought: AccessoryId[];
+  seedLog: SeedEvent[];
+  diaryPhotos: number;
+};
+
+/**
+ * Seeds earned minus spent. Almost everything is derived from the fridge and the
+ * diary, so it can't drift; only capped one-off rewards come from the log.
+ */
+function balance({ items, startedAt, checkIns, bought, seedLog, diaryPhotos }: BalanceInput): number {
+  const now = new Date();
+  return (
+    seedsEarned(items, earnedBadges(items, now, startedAt), checkIns) +
+    challengeSeeds(items, now, startedAt) +
+    stageSeeds(totalXp(items)) +
+    diaryPhotos * SEEDS_PER_DIARY_PHOTO +
+    loggedSeeds(seedLog) -
+    seedsSpent(bought)
+  );
+}
+
 export function seedBalance(): number {
   const { items, startedAt } = useItems.getState();
-  const { checkIns, bought } = useGame.getState();
-  const now = new Date();
-  return seedsEarned(items, earnedBadges(items, now, startedAt), checkIns) + challengeSeeds(items, now, startedAt) - seedsSpent(bought);
+  const { checkIns, bought, seedLog } = useGame.getState();
+  const diaryPhotos = useDiary.getState().entries.filter((e) => e.photoUri).length;
+  return balance({ items, startedAt, checkIns, bought, seedLog, diaryPhotos });
 }
 
 export function useSeedBalance(): number {
@@ -114,8 +166,9 @@ export function useSeedBalance(): number {
   const startedAt = useItems((s) => s.startedAt);
   const checkIns = useGame((s) => s.checkIns);
   const bought = useGame((s) => s.bought);
-  const now = new Date();
-  return seedsEarned(items, earnedBadges(items, now, startedAt), checkIns) + challengeSeeds(items, now, startedAt) - seedsSpent(bought);
+  const seedLog = useGame((s) => s.seedLog);
+  const diaryPhotos = useDiary((s) => s.entries.filter((e) => e.photoUri).length);
+  return balance({ items, startedAt, checkIns, bought, seedLog, diaryPhotos });
 }
 
 function haptic(kind: 'success' | 'warning') {

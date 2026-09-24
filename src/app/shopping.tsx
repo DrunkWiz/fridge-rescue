@@ -43,6 +43,19 @@ function bought(entry: ShoppingEntry) {
   });
 }
 
+/** Taking something off the list because it's already at home is a double-buy avoided, so it earns seeds (capped daily). */
+function skipped(entry: ShoppingEntry) {
+  const shopping = useShopping.getState();
+  const previousEntries = shopping.entries;
+  shopping.remove(entry.id);
+  const seeds = useGame.getState().earnSeeds('skipped-buy');
+  useGame.getState().showMoment({
+    kind: 'toast',
+    text: `skipped a double-buy${seeds ? ` · +${seeds} 🌱` : ''}`,
+    undoFn: () => useShopping.getState().restore(previousEntries),
+  });
+}
+
 function EntryRow({ entry }: { entry: ShoppingEntry }) {
   const theme = useTheme();
   const items = useItems((s) => s.items);
@@ -70,11 +83,14 @@ function EntryRow({ entry }: { entry: ShoppingEntry }) {
         </ThemedText>
         {haveQty > 0 && soonest !== null && (
           <ThemedText type="small" style={{ color: theme.warning }}>
-            you already have {haveQty}{matched} · {when(soonest)}
+            you already have {haveQty}{matched} · {when(soonest)} · ✕ to skip it
           </ThemedText>
         )}
       </View>
-      <Pressable onPress={() => remove(entry.id)} hitSlop={10} accessibilityLabel={`Remove ${entry.name}`}>
+      <Pressable
+        onPress={() => (haveQty > 0 ? skipped(entry) : remove(entry.id))}
+        hitSlop={10}
+        accessibilityLabel={haveQty > 0 ? `Skip ${entry.name}, you already have it` : `Remove ${entry.name}`}>
         <ThemedText type="mono" themeColor="textSecondary">
           ✕
         </ThemedText>
