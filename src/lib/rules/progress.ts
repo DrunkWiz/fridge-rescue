@@ -96,14 +96,33 @@ export type AccessoryId =
   | 'cap' | 'scarf' | 'flower' | 'crown' | 'sunglasses' | 'tophat' | 'bow' | 'star'
   | 'headphones' | 'butterfly'
   | 'beanie' | 'partyhat' | 'glasses' | 'heart' | 'bandana'
-  | 'pumpkin' | 'santa';
-export type Slot = 'head' | 'face' | 'neck' | 'float';
+  | 'pumpkin' | 'santa'
+  | 'chefhat' | 'strawhat' | 'flowercrown'
+  | 'monocle' | 'heartglasses' | 'mustache'
+  | 'apron' | 'tie' | 'pearls'
+  | 'balloon' | 'note' | 'bee'
+  | 'chick' | 'snail' | 'ladybug' | 'cat'
+  | 'meadow' | 'kitchen' | 'beach' | 'sunset' | 'night' | 'autumn' | 'snowfall';
+export type Slot = 'head' | 'face' | 'neck' | 'float' | 'pal' | 'backdrop';
+
+/** Wardrobe and shop groups, in display order. Sprout wears at most one item per slot. */
+export const SLOTS: { slot: Slot; title: string }[] = [
+  { slot: 'head', title: '🎩 hats' },
+  { slot: 'face', title: '👓 face' },
+  { slot: 'neck', title: '🧣 neck' },
+  { slot: 'float', title: '✨ floating' },
+  { slot: 'pal', title: '🐾 pals' },
+  { slot: 'backdrop', title: '🖼 backdrops' },
+];
 
 /** Limited-time shop stock, as inclusive MM-DD dates (may wrap the new year). */
 export type Season = { name: string; from: string; to: string };
 
 /** How you get it: a badge reward, Pro, or bought in the shop with seeds (some only in season). */
 export type Accessory = { id: AccessoryId; emoji: string; name: string; slot: Slot; proOnly?: boolean; price?: number; season?: Season };
+
+const HARVEST: Season = { name: 'harvest season', from: '09-15', to: '11-01' };
+const DECEMBER: Season = { name: 'december', from: '12-01', to: '12-31' };
 
 export const ACCESSORIES: Record<AccessoryId, Accessory> = {
   cap: { id: 'cap', emoji: '🧢', name: 'Cap', slot: 'head' },
@@ -121,8 +140,31 @@ export const ACCESSORIES: Record<AccessoryId, Accessory> = {
   bandana: { id: 'bandana', emoji: '🟥', name: 'Bandana', slot: 'neck', price: 20 },
   glasses: { id: 'glasses', emoji: '👓', name: 'Glasses', slot: 'face', price: 25 },
   partyhat: { id: 'partyhat', emoji: '🥳', name: 'Party hat', slot: 'head', price: 40 },
-  pumpkin: { id: 'pumpkin', emoji: '🎃', name: 'Pumpkin hat', slot: 'head', price: 25, season: { name: 'harvest season', from: '09-15', to: '11-01' } },
-  santa: { id: 'santa', emoji: '🎅', name: 'Santa hat', slot: 'head', price: 25, season: { name: 'december', from: '12-01', to: '12-31' } },
+  pumpkin: { id: 'pumpkin', emoji: '🎃', name: 'Pumpkin hat', slot: 'head', price: 25, season: HARVEST },
+  santa: { id: 'santa', emoji: '🎅', name: 'Santa hat', slot: 'head', price: 25, season: DECEMBER },
+  chefhat: { id: 'chefhat', emoji: '👨‍🍳', name: 'Chef hat', slot: 'head', price: 30 },
+  strawhat: { id: 'strawhat', emoji: '👒', name: 'Straw hat', slot: 'head', price: 25 },
+  flowercrown: { id: 'flowercrown', emoji: '💐', name: 'Flower crown', slot: 'head', price: 35 },
+  monocle: { id: 'monocle', emoji: '🧐', name: 'Monocle', slot: 'face', price: 30 },
+  heartglasses: { id: 'heartglasses', emoji: '😍', name: 'Heart glasses', slot: 'face', price: 35 },
+  mustache: { id: 'mustache', emoji: '🥸', name: 'Moustache', slot: 'face', price: 20 },
+  apron: { id: 'apron', emoji: '🧑‍🍳', name: 'Apron', slot: 'neck', price: 35 },
+  tie: { id: 'tie', emoji: '👔', name: 'Tie', slot: 'neck', price: 25 },
+  pearls: { id: 'pearls', emoji: '📿', name: 'Necklace', slot: 'neck', price: 30 },
+  balloon: { id: 'balloon', emoji: '🎈', name: 'Balloon', slot: 'float', price: 30 },
+  note: { id: 'note', emoji: '🎵', name: 'Music note', slot: 'float', price: 20 },
+  bee: { id: 'bee', emoji: '🐝', name: 'Bee', slot: 'float', price: 25 },
+  chick: { id: 'chick', emoji: '🐤', name: 'Chick', slot: 'pal', price: 40 },
+  snail: { id: 'snail', emoji: '🐌', name: 'Snail', slot: 'pal', price: 30 },
+  ladybug: { id: 'ladybug', emoji: '🐞', name: 'Ladybird', slot: 'pal', price: 35 },
+  cat: { id: 'cat', emoji: '🐱', name: 'Cat', slot: 'pal', proOnly: true },
+  meadow: { id: 'meadow', emoji: '🌼', name: 'Meadow', slot: 'backdrop', price: 30 },
+  kitchen: { id: 'kitchen', emoji: '🍳', name: 'Kitchen', slot: 'backdrop', price: 40 },
+  beach: { id: 'beach', emoji: '🏖️', name: 'Beach', slot: 'backdrop', price: 50 },
+  sunset: { id: 'sunset', emoji: '🌇', name: 'Sunset', slot: 'backdrop', price: 60 },
+  night: { id: 'night', emoji: '🌙', name: 'Night sky', slot: 'backdrop', proOnly: true },
+  autumn: { id: 'autumn', emoji: '🍂', name: 'Autumn leaves', slot: 'backdrop', price: 40, season: HARVEST },
+  snowfall: { id: 'snowfall', emoji: '❄️', name: 'Snowfall', slot: 'backdrop', price: 45, season: DECEMBER },
 };
 
 function monthDay(date: Date): string {

@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Creature } from '@/components/creature/creature';
-import { buildAccessory, palette } from '@/components/creature/sprites';
+import { buildAccessory, palette, tilePixel } from '@/components/creature/sprites';
 import { PixelGrid } from '@/components/pixel-grid';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -18,6 +18,7 @@ import {
   SEEDS_PER_DONATED_UNIT,
   SEEDS_PER_RESCUED_UNIT,
   SHOP,
+  SLOTS,
   shopStock,
   totalXp,
   type Accessory,
@@ -75,7 +76,7 @@ function ShopItem({ item, balance, armed, onArm }: { item: Accessory; balance: n
         },
       ]}>
       <View style={styles.preview}>
-        <PixelGrid grid={buildAccessory(item.id)} palette={ITEM_PALETTE} pixel={5} />
+        <PixelGrid grid={buildAccessory(item.id)} palette={ITEM_PALETTE} pixel={tilePixel(item.id, 5)} />
       </View>
       <ThemedText type="mono" style={styles.center} numberOfLines={1}>
         {item.name.toLowerCase()}
@@ -122,11 +123,22 @@ export default function ShopScreen() {
           fridge check · +10 per badge. seeds can&apos;t be bought.
         </ThemedText>
 
-        <View style={styles.grid}>
-          {stock.map((item) => (
-            <ShopItem key={item.id} item={item} balance={balance} armed={armed === item.id} onArm={setArmed} />
-          ))}
-        </View>
+        {SLOTS.map(({ slot, title }) => {
+          const inSlot = stock.filter((a) => a.slot === slot);
+          if (inSlot.length === 0) return null;
+          return (
+            <View key={slot} style={styles.group}>
+              <ThemedText type="mono" style={{ fontWeight: 700 }}>
+                {title}
+              </ThemedText>
+              <View style={styles.grid}>
+                {inSlot.map((item) => (
+                  <ShopItem key={item.id} item={item} balance={balance} armed={armed === item.id} onArm={setArmed} />
+                ))}
+              </View>
+            </View>
+          );
+        })}
 
         <ThemedText type="mono" themeColor="textSecondary" style={styles.center}>
           more outfits come from badges → sprout tab
@@ -141,6 +153,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 14 },
   header: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
   balance: { borderWidth: 1.5, borderRadius: 6, paddingHorizontal: 14, paddingVertical: 8, alignItems: 'center', marginRight: 8 },
+  group: { gap: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   item: { width: '31%', borderWidth: 1.5, borderRadius: 6, paddingVertical: 12, paddingHorizontal: 6, alignItems: 'center', gap: 4 },
   preview: { height: 56, justifyContent: 'center' },

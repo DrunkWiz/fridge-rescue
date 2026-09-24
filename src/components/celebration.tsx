@@ -4,7 +4,7 @@ import Animated, { Easing, FadeInDown, FadeOutDown, useAnimatedStyle, useSharedV
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
-import { buildAccessory, palette } from '@/components/creature/sprites';
+import { buildAccessory, palette, tilePixel } from '@/components/creature/sprites';
 import { PixelGrid } from '@/components/pixel-grid';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
@@ -123,7 +123,7 @@ export function CelebrationOverlay() {
           style={[styles.card, { backgroundColor: theme.background, borderColor: theme.border }]}>
           {moment.kind === 'bought' ? (
             <>
-              <PixelGrid grid={buildAccessory(moment.id)} palette={palette('content')} pixel={8} />
+              <PixelGrid grid={buildAccessory(moment.id)} palette={palette('content')} pixel={tilePixel(moment.id, 8)} />
               <ThemedText type="mono" style={styles.center}>
                 {name} put on the {ACCESSORIES[moment.id].name.toLowerCase()}.
               </ThemedText>

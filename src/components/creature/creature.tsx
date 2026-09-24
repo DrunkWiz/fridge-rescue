@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -15,7 +15,19 @@ import { PixelGrid } from '@/components/pixel-grid';
 import type { CreatureMood } from '@/lib/rules/creature';
 import type { AccessoryId, Slot } from '@/lib/rules/progress';
 
-import { buildSprout, HEIGHT, palette, WIDTH } from './sprites';
+import {
+  BACKDROPS,
+  buildPal,
+  buildSprout,
+  HEIGHT,
+  PAL_ORIGIN,
+  palette,
+  SCENE_HEIGHT,
+  SCENE_LEFT,
+  SCENE_TOP,
+  SCENE_WIDTH,
+  WIDTH,
+} from './sprites';
 
 /**
  * Sprout as pixel art (see sprites.ts). One static sprite per mood, cross-faded
@@ -38,8 +50,13 @@ export function Creature({ mood, level = 1, equipped = {}, onPress, size = 'larg
   const jump = useSharedValue(0);
   const breathe = useSharedValue(1);
 
-  const accessories = Object.values(equipped).filter(Boolean) as AccessoryId[];
+  // Pals and backdrops are drawn around Sprout, not on it.
+  const { pal, backdrop, ...worn } = equipped;
+  const accessories = Object.values(worn).filter(Boolean) as AccessoryId[];
   const key = accessories.join(',');
+  const backdropGrid = useMemo(() => (backdrop ? (BACKDROPS[backdrop]?.() ?? null) : null), [backdrop]);
+  const palGrid = useMemo(() => (pal ? buildPal(pal) : null), [pal]);
+  const inScene = Boolean(backdropGrid || palGrid);
   const grid = useMemo(() => buildSprout(mood, level, key ? (key.split(',') as AccessoryId[]) : []), [mood, level, key]);
   const pixel = pixelForLevel(level, size);
   // Frame fits the current stage (it only changes on a level-up); the cross-fading
@@ -66,13 +83,35 @@ export function Creature({ mood, level = 1, equipped = {}, onPress, size = 'larg
     onPress?.();
   };
 
+  const colors = palette(mood);
+  const sprout = (
+    <Animated.View style={[styles.frame, frame, animated]}>
+      <Animated.View key={`${mood}-${level}-${key}`} entering={FadeIn.duration(300)} exiting={FadeOut.duration(300)} style={styles.sprite}>
+        <PixelGrid grid={grid} palette={colors} pixel={pixel} />
+      </Animated.View>
+    </Animated.View>
+  );
+
   return (
     <Pressable onPress={tap} disabled={!onPress} accessibilityRole="button" accessibilityLabel={`Sprout is ${mood}. Tap to say hi.`}>
-      <Animated.View style={[styles.frame, frame, animated]}>
-        <Animated.View key={`${mood}-${level}-${key}`} entering={FadeIn.duration(300)} exiting={FadeOut.duration(300)} style={styles.sprite}>
-          <PixelGrid grid={grid} palette={palette(mood)} pixel={pixel} />
-        </Animated.View>
-      </Animated.View>
+      {inScene ? (
+        // A still scene (backdrop and pal) with Sprout standing in it, feet on the bottom edge.
+        <View style={[styles.scene, { width: SCENE_WIDTH * pixel, height: SCENE_HEIGHT * pixel }]}>
+          {backdropGrid && (
+            <View style={styles.layer}>
+              <PixelGrid grid={backdropGrid} palette={colors} pixel={pixel} />
+            </View>
+          )}
+          <View style={[styles.layer, { left: SCENE_LEFT * pixel, top: SCENE_TOP * pixel }]}>{sprout}</View>
+          {palGrid && (
+            <View style={[styles.layer, { left: PAL_ORIGIN.col * pixel, top: PAL_ORIGIN.row * pixel }]}>
+              <PixelGrid grid={palGrid} palette={colors} pixel={pixel} />
+            </View>
+          )}
+        </View>
+      ) : (
+        sprout
+      )}
     </Pressable>
   );
 }
@@ -80,4 +119,6 @@ export function Creature({ mood, level = 1, equipped = {}, onPress, size = 'larg
 const styles = StyleSheet.create({
   frame: { alignSelf: 'center', alignItems: 'center', justifyContent: 'flex-end', transformOrigin: 'bottom' },
   sprite: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
+  scene: { alignSelf: 'center' },
+  layer: { position: 'absolute', left: 0, top: 0 },
 });

@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Creature } from '@/components/creature/creature';
-import { buildAccessory, palette } from '@/components/creature/sprites';
+import { buildAccessory, palette, tilePixel } from '@/components/creature/sprites';
 import { PixelBar } from '@/components/pixel-bar';
 import { PixelGrid } from '@/components/pixel-grid';
 import { ThemedText } from '@/components/themed-text';
@@ -21,6 +21,7 @@ import {
   dailyStars,
   earnedBadges,
   growth,
+  SLOTS,
   STAGES,
   totalXp,
   unlockedAccessories,
@@ -28,18 +29,9 @@ import {
   XP_PER_DONATED_UNIT,
   XP_PER_RESCUED_UNIT,
   type AccessoryId,
-  type Slot,
 } from '@/lib/rules/progress';
 import { useGame } from '@/store/game';
 import { useItems } from '@/store/items';
-
-/** Wardrobe groups, one per slot: only one accessory per slot can be worn at once. */
-const WARDROBE_SLOTS: { slot: Slot; title: string }[] = [
-  { slot: 'head', title: '🎩 hats' },
-  { slot: 'face', title: '👓 face' },
-  { slot: 'neck', title: '🧣 neck' },
-  { slot: 'float', title: '✨ floating' },
-];
 
 const ACCESSORY_PALETTE = palette('content');
 const LOCKED_PALETTE = Object.fromEntries(Object.keys(ACCESSORY_PALETTE).map((k) => [k, '#C9C9C2']));
@@ -152,7 +144,7 @@ export default function SproutScreen() {
           one per group at a time — putting one on swaps out the other. tap again to take it off. locked items come from
           badges, the shop or pro.
         </ThemedText>
-        {WARDROBE_SLOTS.map(({ slot, title }) => {
+        {SLOTS.map(({ slot, title }) => {
           const worn = equipped[slot];
           return (
             <View key={slot} style={styles.slot}>
@@ -178,7 +170,7 @@ export default function SproutScreen() {
                         accessibilityLabel={`${a.name}${has ? (wearing ? ', wearing' : '') : a.proOnly ? ', Pro' : ', locked'}`}
                         style={[styles.accessory, { borderColor: wearing ? theme.tint : has ? theme.border : theme.backgroundSelected }]}>
                         <View style={styles.accessoryArt}>
-                          <PixelGrid grid={buildAccessory(a.id)} palette={has ? ACCESSORY_PALETTE : LOCKED_PALETTE} pixel={4} />
+                          <PixelGrid grid={buildAccessory(a.id)} palette={has ? ACCESSORY_PALETTE : LOCKED_PALETTE} pixel={tilePixel(a.id, 4)} />
                         </View>
                         <ThemedText type="mono" style={[styles.center, styles.tiny]} numberOfLines={1} themeColor={has ? 'text' : 'textSecondary'}>
                           {has ? a.name.toLowerCase() : a.proOnly ? 'pro' : a.season ? 'seasonal' : a.price !== undefined ? `🌱${a.price}` : '🔒'}
