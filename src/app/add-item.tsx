@@ -4,12 +4,13 @@ import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'reac
 
 import { BarcodeScanner } from '@/components/barcode-scanner';
 import { Button } from '@/components/button';
+import { DateWheelPicker } from '@/components/date-wheel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
 import { lookupBarcode } from '@/lib/api/openfoodfacts';
 import { CATEGORIES, CATEGORY_KEYS } from '@/lib/categories';
-import { addDays } from '@/lib/rules/dates';
+import { addDays, daysUntil, formatDayMonthYear } from '@/lib/rules/dates';
 import type { Category } from '@/lib/types';
 import { FREE_ITEM_LIMIT, useIsPro } from '@/lib/purchases';
 import { useFreeScansLeft } from '@/store/game';
@@ -47,6 +48,7 @@ export default function AddItemScreen() {
   const [quantity, setQuantity] = useState(1);
   const [days, setDays] = useState(CATEGORIES.produce.defaultShelfLifeDays);
   const [opened, setOpened] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [lookupNote, setLookupNote] = useState<string | null>(null);
 
@@ -145,17 +147,33 @@ export default function AddItemScreen() {
         </View>
 
         <View style={styles.rowBetween}>
-          <View>
+          <View style={{ gap: 4 }}>
             <ThemedText type="smallBold">Use by</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {expiresAt.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-            </ThemedText>
+            <Pressable
+              onPress={() => setPicking(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`Use by ${formatDayMonthYear(expiresAt)}. Tap to pick a date`}
+              style={({ pressed }) => [styles.dateButton, { borderColor: theme.text, opacity: pressed ? 0.7 : 1 }]}>
+              <ThemedText type="mono" style={{ fontWeight: 700 }}>
+                📅 {formatDayMonthYear(expiresAt)}
+              </ThemedText>
+            </Pressable>
           </View>
           <Stepper value={days} onChange={setDays} min={0} step={days >= 60 ? 30 : 1} />
         </View>
         <ThemedText type="small" themeColor="textSecondary">
-          Days from today. Pre-filled from the category — adjust to match the label.
+          {days === 0 ? 'Today' : `In ${days} day${days === 1 ? '' : 's'}`}. Pre-filled from the category — tap the date to match the
+          label.
         </ThemedText>
+        <DateWheelPicker
+          visible={picking}
+          value={expiresAt}
+          onCancel={() => setPicking(false)}
+          onConfirm={(date) => {
+            setDays(Math.max(0, daysUntil(date.toISOString(), new Date())));
+            setPicking(false);
+          }}
+        />
 
         <View style={styles.rowBetween}>
           <ThemedText type="smallBold">Already opened</ThemedText>
@@ -178,6 +196,7 @@ export default function AddItemScreen() {
 }
 
 const styles = StyleSheet.create({
+  dateButton: { borderWidth: 1.5, borderRadius: 4, paddingHorizontal: 10, paddingVertical: 6, alignSelf: 'flex-start' },
   container: { flex: 1 },
   content: { padding: 16, gap: 12 },
   input: { borderRadius: 6, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },

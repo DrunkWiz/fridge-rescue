@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 
 import type { Item } from '../types.ts';
 import { creatureMood } from './creature.ts';
-import { addDays } from './dates.ts';
+import { addDays, daysInMonth, formatDayMonthYear } from './dates.ts';
 import {
   DONATION_MIN_DAYS_TO_EXPIRY,
   estimateMeals,
@@ -155,5 +155,19 @@ describe('impact history', () => {
   it('exports CSV with escaping and the drop-off name', () => {
     const csv = historyToCsv([done('Beans, butter', 'donated', new Date(2026, 8, 20), { donatedTo: 'The "Pantry"' })]);
     assert.equal(csv.split('\n')[1], '2026-09-20,"Beans, butter",tinned,1,donated,"The ""Pantry"""');
+  });
+});
+
+describe('date picker helpers', () => {
+  it('knows how long each month is, including leap years', () => {
+    assert.equal(daysInMonth(2026, 0), 31);
+    assert.equal(daysInMonth(2026, 3), 30);
+    assert.equal(daysInMonth(2026, 1), 28);
+    assert.equal(daysInMonth(2028, 1), 29);
+  });
+
+  it('formats dates as dd MMM YYYY', () => {
+    assert.equal(formatDayMonthYear(new Date(2026, 8, 5)), '05 Sep 2026');
+    assert.equal(formatDayMonthYear(new Date(2027, 7, 20)), '20 Aug 2027');
   });
 });

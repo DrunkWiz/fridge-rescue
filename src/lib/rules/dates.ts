@@ -21,3 +21,16 @@ export function addDays(date: Date, days: number): Date {
   next.setDate(next.getDate() + days);
   return next;
 }
+
+/** Month names for date pickers and labels: fixed English abbreviations, whatever the locale. */
+export const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Days in a month (month is 0–11), leap years included. */
+export function daysInMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+/** "05 Sep 2026" (dd MMM YYYY). */
+export function formatDayMonthYear(date: Date): string {
+  return `${String(date.getDate()).padStart(2, '0')} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+}
