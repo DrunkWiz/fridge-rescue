@@ -20,6 +20,7 @@ import {
   completedChallenges,
   dailyStars,
   earnedBadges,
+  COVERED_BY_OUTFIT,
   growth,
   SLOTS,
   STAGES,
@@ -34,6 +35,12 @@ import { useGame } from '@/store/game';
 import { useItems } from '@/store/items';
 
 const ACCESSORY_PALETTE = palette('content');
+/** "with t-rex" for a backdrop that only comes with an outfit. */
+function bundleLabel(id: AccessoryId): string {
+  const outfit = Object.values(ACCESSORIES).find((a) => a.backdrop === id);
+  return outfit ? `with ${outfit.name.toLowerCase()}` : '🔒';
+}
+
 const LOCKED_PALETTE = Object.fromEntries(Object.keys(ACCESSORY_PALETTE).map((k) => [k, '#C9C9C2']));
 
 function Stat({ value, label }: { value: string; label: string }) {
@@ -57,6 +64,7 @@ export default function SproutScreen() {
   const bought = useGame((s) => s.bought);
   const checkIns = useGame((s) => s.checkIns);
   const toggleAccessory = useGame((s) => s.toggleAccessory);
+  const takeOff = useGame((s) => s.takeOff);
   const isPro = useIsPro();
   const isAdmin = useIsAdmin();
 
@@ -66,10 +74,12 @@ export default function SproutScreen() {
   // Admin mode (for judges) unlocks the whole wardrobe.
   const unlocked = isAdmin ? (Object.keys(ACCESSORIES) as AccessoryId[]) : unlockedAccessories(badges, isPro, bought);
 
+  const outfit = equipped.outfit ? ACCESSORIES[equipped.outfit] : null;
+
   const wear = (id: AccessoryId) => {
     if (unlocked.includes(id)) toggleAccessory(id);
     else if (ACCESSORIES[id].proOnly) router.push('/paywall');
-    else if (ACCESSORIES[id].price !== undefined) router.push('/shop');
+    else router.push('/shop');
   };
 
   return (
@@ -141,23 +151,38 @@ export default function SproutScreen() {
           wardrobe
         </ThemedText>
         <ThemedText type="mono" themeColor="textSecondary" style={styles.tiny}>
-          one per group at a time — putting one on swaps out the other. tap again to take it off. locked items come from
-          badges, the shop or pro.
+          one per group at a time. a full outfit covers hats, face and neck, and brings its own backdrop (you can
+          change it). locked items come from badges, the shop or pro.
         </ThemedText>
         {SLOTS.map(({ slot, title }) => {
           const worn = equipped[slot];
+          // Under a full outfit these can't be seen, so they can't be picked either.
+          const covered = outfit !== null && COVERED_BY_OUTFIT.includes(slot);
           return (
             <View key={slot} style={styles.slot}>
-              <ThemedText type="mono" style={styles.tiny}>
-                <ThemedText type="mono" style={[styles.tiny, { fontWeight: 700 }]}>
-                  {title}
+              <View style={styles.slotHeading}>
+                <ThemedText type="mono" style={[styles.tiny, { flex: 1 }]} numberOfLines={1}>
+                  <ThemedText type="mono" style={[styles.tiny, { fontWeight: 700 }]}>
+                    {title}
+                  </ThemedText>
+                  <ThemedText type="mono" themeColor="textSecondary" style={styles.tiny}>
+                    {'  ·  '}
+                    {covered
+                      ? `covered by the ${outfit.name.toLowerCase()}`
+                      : worn
+                        ? `wearing ${ACCESSORIES[worn].name.toLowerCase()}`
+                        : 'nothing on'}
+                  </ThemedText>
                 </ThemedText>
-                <ThemedText type="mono" themeColor="textSecondary" style={styles.tiny}>
-                  {'  ·  '}
-                  {worn ? `wearing ${ACCESSORIES[worn].name.toLowerCase()}` : 'nothing on'}
-                </ThemedText>
-              </ThemedText>
-              <View style={styles.wardrobe}>
+                {worn && !covered && (
+                  <Pressable onPress={() => takeOff(slot)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Take off ${ACCESSORIES[worn].name}`}>
+                    <ThemedText type="mono" style={[styles.tiny, { color: theme.danger }]}>
+                      ✕ take off
+                    </ThemedText>
+                  </Pressable>
+                )}
+              </View>
+              <View style={[styles.wardrobe, covered && styles.covered]} pointerEvents={covered ? 'none' : 'auto'}>
                 {Object.values(ACCESSORIES)
                   .filter((a) => a.slot === slot)
                   .map((a) => {
@@ -173,7 +198,7 @@ export default function SproutScreen() {
                           <PixelGrid grid={buildAccessory(a.id)} palette={has ? ACCESSORY_PALETTE : LOCKED_PALETTE} pixel={tilePixel(a.id, 4)} />
                         </View>
                         <ThemedText type="mono" style={[styles.center, styles.tiny]} numberOfLines={1} themeColor={has ? 'text' : 'textSecondary'}>
-                          {has ? a.name.toLowerCase() : a.proOnly ? 'pro' : a.season ? 'seasonal' : a.price !== undefined ? `🌱${a.price}` : '🔒'}
+                          {has ? a.name.toLowerCase() : a.proOnly ? 'pro' : a.season ? 'seasonal' : a.price !== undefined ? `🌱${a.price}` : bundleLabel(a.id)}
                         </ThemedText>
                       </Pressable>
                     );
@@ -203,6 +228,8 @@ const styles = StyleSheet.create({
   badge: { width: '48.5%', padding: 10, alignItems: 'center', gap: 4 },
   badgeArt: { height: 44, justifyContent: 'center' },
   slot: { gap: 6 },
+  slotHeading: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  covered: { opacity: 0.35 },
   wardrobe: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   accessory: { width: '18.5%', minWidth: 58, paddingVertical: 8, borderRadius: 6, borderWidth: 1.5, alignItems: 'center', gap: 4 },
   accessoryArt: { height: 40, justifyContent: 'center' },

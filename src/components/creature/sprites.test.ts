@@ -1,19 +1,26 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { ACCESSORIES, BADGES, SLOTS, type AccessoryId } from '../../lib/rules/progress.ts';
+import { ACCESSORIES, BADGES, SLOTS, unlockedAccessories, type AccessoryId } from '../../lib/rules/progress.ts';
 import { ACCESSORY_PIXELS, BACKDROPS, HEIGHT, OUTFITS, PAL_PIXELS, SCENE_HEIGHT, SCENE_WIDTH, WIDTH } from './sprites.ts';
 
 const ids = Object.keys(ACCESSORIES) as AccessoryId[];
 
 describe('wardrobe', () => {
+  it('gives an outfit its matching backdrop', () => {
+    assert.ok(unlockedAccessories([], false, ['trex']).includes('volcano'));
+    assert.ok(!unlockedAccessories([], false, []).includes('volcano'));
+  });
+
   it('lists every slot, and every item can be earned, bought or unlocked with Pro', () => {
     const slots = new Set(SLOTS.map((s) => s.slot));
     const rewards = new Set(BADGES.map((b) => b.reward));
+    const bundled = new Set(ids.map((id) => ACCESSORIES[id].backdrop));
     for (const id of ids) {
       const a = ACCESSORIES[id];
       assert.ok(slots.has(a.slot), `${id} is in an unlisted slot`);
-      assert.ok(rewards.has(id) || a.proOnly || a.price !== undefined, `${id} can't be obtained`);
+      assert.ok(rewards.has(id) || a.proOnly || a.price !== undefined || bundled.has(id), `${id} can't be obtained`);
+      if (a.backdrop) assert.equal(ACCESSORIES[a.backdrop].slot, 'backdrop', `${id}'s backdrop isn't a backdrop`);
     }
   });
 

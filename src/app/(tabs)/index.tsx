@@ -149,16 +149,13 @@ function Header({ items, now }: { items: Item[]; now: Date }) {
       <View style={styles.header}>
         <Creature mood={mood} level={g.stage.level} equipped={equipped} onPress={say} size="small" />
         <Pressable style={styles.headerInfo} onPress={() => router.push('/sprout')} accessibilityRole="button" accessibilityHint="Opens Sprout">
-          <ThemedText type="mono" style={{ fontWeight: 700 }}>
+          <ThemedText type="mono" style={{ fontWeight: 700 }} numberOfLines={2}>
             {STATUS[mood].replace('sprout', name)}
           </ThemedText>
-          <ThemedText type="mono" themeColor="textSecondary" style={styles.tiny}>
-            lv {g.stage.level} {g.stage.name.toLowerCase()} · {g.next ? `${g.xp}/${g.next.minXp} xp` : `${g.xp} xp`}
+          <ThemedText type="mono" themeColor="textSecondary" style={styles.tiny} numberOfLines={1}>
+            lv {g.stage.level} {g.stage.name.toLowerCase()} · 🌱 {seeds} · 🔥 {streak}d
           </ThemedText>
-          <PixelBar progress={g.progress} segments={10} />
-          <ThemedText type="mono" style={styles.tiny}>
-            🌱 {seeds} · 🔥 {streak}d waste-free
-          </ThemedText>
+          <PixelBar progress={g.progress} segments={10} slim />
         </Pressable>
       </View>
       {bubble && (
@@ -207,22 +204,32 @@ function BranchCard({ title, body, color, onPress }: { title: string; body: stri
   );
 }
 
-function ChallengeLine({ items, now }: { items: Item[]; now: Date }) {
+function Chip({ label, color, onPress, grow }: { label: string; color: string; onPress: () => void; grow?: boolean }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.chip, { borderColor: color, opacity: pressed ? 0.7 : 1 }, grow && { flex: 1 }]}>
+      <ThemedText type="mono" style={[styles.tiny, { color }]} numberOfLines={1}>
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
+/** This week's challenge and the shopping list, as one quiet row. */
+function TodayChips({ items, now, listCount }: { items: Item[]; now: Date; listCount: number }) {
   const theme = useTheme();
   const { challenge, progress, done } = currentChallenge(items, now);
   return (
-    <View style={styles.challenge}>
-      <ThemedText type="mono" style={styles.tiny} numberOfLines={1}>
-        {done ? '✓ ' : '🎯 '}this week: {challenge.title} · +{challenge.reward} 🌱
-      </ThemedText>
-      <View style={styles.row}>
-        <View style={{ flex: 1 }}>
-          <PixelBar progress={progress / challenge.goal} segments={challenge.goal * 3} color={done ? theme.tint : undefined} />
-        </View>
-        <ThemedText type="mono" style={[styles.tiny, { marginLeft: 8 }]}>
-          {progress}/{challenge.goal}
-        </ThemedText>
-      </View>
+    <View style={styles.row}>
+      <Chip
+        grow
+        label={`${done ? '✓' : '🎯'} ${challenge.title} · ${progress}/${challenge.goal}`}
+        color={done ? theme.tint : theme.text}
+        onPress={() => router.push('/sprout')}
+      />
+      <Chip label={`🛒 list${listCount ? ` · ${listCount}` : ''}`} color={theme.tint} onPress={() => router.push('/shopping')} />
     </View>
   );
 }
@@ -295,12 +302,7 @@ export default function HomeScreen() {
                     )}
                   </View>
                 )}
-                <ChallengeLine items={items} now={now} />
-                <Pressable onPress={() => router.push('/shopping')} accessibilityRole="button" hitSlop={6}>
-                  <ThemedText type="mono" style={[styles.tiny, { color: theme.tint }]}>
-                    🛒 shopping list{listCount ? ` · ${listCount}` : ''} →
-                  </ThemedText>
-                </Pressable>
+                <TodayChips items={items} now={now} listCount={listCount} />
               </>
             )}
           </View>
@@ -351,10 +353,10 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   list: { paddingHorizontal: 16, gap: 8 },
-  top: { gap: 12, paddingTop: 8, paddingBottom: 4 },
+  top: { gap: 12, paddingTop: 12, paddingBottom: 4 },
   headerBlock: { gap: 8 },
-  header: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
-  headerInfo: { flex: 1, gap: 2 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  headerInfo: { flex: 1, gap: 6 },
   tiny: { fontSize: 12, lineHeight: 16 },
   bubble: { borderRadius: 6, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8 },
   center: { textAlign: 'center' },
@@ -362,8 +364,8 @@ const styles = StyleSheet.create({
   card: { borderWidth: 1.5, borderRadius: 6, padding: 12, gap: 8 },
   branch: { flex: 1, gap: 2 },
   askRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  challenge: { gap: 2 },
-  heading: { marginTop: 8, fontSize: 12 },
+  chip: { borderWidth: 1.5, borderRadius: 4, paddingHorizontal: 10, paddingVertical: 6 },
+  heading: { marginTop: 12, fontSize: 12 },
   empty: { alignItems: 'center', gap: 16, paddingVertical: 32, paddingHorizontal: 24 },
   itemBlock: { gap: 6 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 4, paddingBottom: 4 },

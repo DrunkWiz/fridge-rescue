@@ -15,6 +15,7 @@ import { creatureMood } from '@/lib/rules/creature';
 import {
   ACCESSORIES,
   growth,
+  COVERED_BY_OUTFIT,
   SHOP,
   SLOTS,
   shopStock,
@@ -37,12 +38,15 @@ function ShopItem({ item, balance, armed, onArm }: { item: Accessory; balance: n
   // Admin mode (for judges): everything is owned, so every tap just puts it on or takes it off.
   const isAdmin = useIsAdmin();
   const owned = bought || item.proOnly || isAdmin;
+  // Hats, face and neck items can't be seen under a full outfit.
+  const covered = useGame((s) => Boolean(s.equipped.outfit)) && COVERED_BY_OUTFIT.includes(item.slot);
 
   const proLocked = item.proOnly && !isPro;
   const affordable = item.price !== undefined && balance >= item.price;
 
   const onPress = () => {
     if (proLocked) router.push('/paywall');
+    else if (owned && covered) return;
     else if (owned) toggle(item.id);
     else if (affordable && armed) {
       buy(item.id);
@@ -52,7 +56,9 @@ function ShopItem({ item, balance, armed, onArm }: { item: Accessory; balance: n
 
   const label = proLocked
     ? 'PRO'
-    : owned
+    : owned && covered
+      ? 'covered'
+      : owned
       ? wearing
         ? 'wearing'
         : 'wear'

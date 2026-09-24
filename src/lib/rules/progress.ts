@@ -103,7 +103,8 @@ export type AccessoryId =
   | 'balloon' | 'note' | 'bee'
   | 'chick' | 'snail' | 'ladybug' | 'cat'
   | 'meadow' | 'kitchen' | 'beach' | 'sunset' | 'night' | 'autumn' | 'snowfall'
-  | 'trex' | 'frog' | 'penguin' | 'strawberry' | 'avocado' | 'astronaut';
+  | 'trex' | 'frog' | 'penguin' | 'strawberry' | 'avocado' | 'astronaut'
+  | 'volcano' | 'pond';
 export type Slot = 'outfit' | 'head' | 'face' | 'neck' | 'float' | 'pal' | 'backdrop';
 
 /** Wardrobe and shop groups, in display order. Sprout wears at most one item per slot; a full outfit covers hats, face and neck items. */
@@ -120,8 +121,23 @@ export const SLOTS: { slot: Slot; title: string }[] = [
 /** Limited-time shop stock, as inclusive MM-DD dates (may wrap the new year). */
 export type Season = { name: string; from: string; to: string };
 
-/** How you get it: a badge reward, Pro, or bought in the shop with seeds (some only in season). */
-export type Accessory = { id: AccessoryId; emoji: string; name: string; slot: Slot; proOnly?: boolean; price?: number; season?: Season };
+/**
+ * How you get it: a badge reward, Pro, or bought in the shop with seeds (some only in season).
+ * A full outfit names its matching `backdrop`, which comes free with it and goes on with it.
+ */
+export type Accessory = {
+  id: AccessoryId;
+  emoji: string;
+  name: string;
+  slot: Slot;
+  proOnly?: boolean;
+  price?: number;
+  season?: Season;
+  backdrop?: AccessoryId;
+};
+
+/** Slots a full outfit covers: items there can't be seen while it's on. */
+export const COVERED_BY_OUTFIT: Slot[] = ['head', 'face', 'neck'];
 
 const HARVEST: Season = { name: 'harvest season', from: '09-15', to: '11-01' };
 const DECEMBER: Season = { name: 'december', from: '12-01', to: '12-31' };
@@ -166,12 +182,14 @@ export const ACCESSORIES: Record<AccessoryId, Accessory> = {
   sunset: { id: 'sunset', emoji: '🌇', name: 'Sunset', slot: 'backdrop', price: 60 },
   night: { id: 'night', emoji: '🌙', name: 'Night sky', slot: 'backdrop', proOnly: true },
   autumn: { id: 'autumn', emoji: '🍂', name: 'Autumn leaves', slot: 'backdrop', price: 40, season: HARVEST },
-  trex: { id: 'trex', emoji: '🦖', name: 'T-rex', slot: 'outfit', price: 120 },
-  frog: { id: 'frog', emoji: '🐸', name: 'Frog', slot: 'outfit', price: 80 },
-  penguin: { id: 'penguin', emoji: '🐧', name: 'Penguin', slot: 'outfit', price: 90 },
-  strawberry: { id: 'strawberry', emoji: '🍓', name: 'Strawberry', slot: 'outfit', price: 100 },
-  avocado: { id: 'avocado', emoji: '🥑', name: 'Avocado', slot: 'outfit', price: 100 },
-  astronaut: { id: 'astronaut', emoji: '👩‍🚀', name: 'Astronaut', slot: 'outfit', proOnly: true },
+  trex: { id: 'trex', emoji: '🦖', name: 'T-rex', slot: 'outfit', price: 120, backdrop: 'volcano' },
+  frog: { id: 'frog', emoji: '🐸', name: 'Frog', slot: 'outfit', price: 80, backdrop: 'pond' },
+  penguin: { id: 'penguin', emoji: '🐧', name: 'Penguin', slot: 'outfit', price: 90, backdrop: 'snowfall' },
+  strawberry: { id: 'strawberry', emoji: '🍓', name: 'Strawberry', slot: 'outfit', price: 100, backdrop: 'meadow' },
+  avocado: { id: 'avocado', emoji: '🥑', name: 'Avocado', slot: 'outfit', price: 100, backdrop: 'kitchen' },
+  astronaut: { id: 'astronaut', emoji: '👩‍🚀', name: 'Astronaut', slot: 'outfit', proOnly: true, backdrop: 'night' },
+  volcano: { id: 'volcano', emoji: '🌋', name: 'Volcano', slot: 'backdrop' },
+  pond: { id: 'pond', emoji: '🪷', name: 'Pond', slot: 'backdrop' },
   snowfall: { id: 'snowfall', emoji: '❄️', name: 'Snowfall', slot: 'backdrop', price: 45, season: DECEMBER },
 };
 
@@ -254,7 +272,10 @@ export function earnedBadges(items: Item[], now: Date, startedAt?: string | null
 export function unlockedAccessories(badges: BadgeId[], isPro: boolean, bought: AccessoryId[] = []): AccessoryId[] {
   const fromBadges = BADGES.filter((b) => badges.includes(b.id)).map((b) => b.reward);
   const fromPro = isPro ? (Object.values(ACCESSORIES).filter((a) => a.proOnly).map((a) => a.id) as AccessoryId[]) : [];
-  return [...fromBadges, ...fromPro, ...bought.filter((id) => ACCESSORIES[id].price !== undefined)];
+  const owned = [...fromBadges, ...fromPro, ...bought.filter((id) => ACCESSORIES[id].price !== undefined)];
+  // A full outfit brings its matching backdrop.
+  const bundled = owned.map((id) => ACCESSORIES[id].backdrop).filter((id): id is AccessoryId => id !== undefined);
+  return [...new Set([...owned, ...bundled])];
 }
 
 // ── Seeds: the in-game currency (never bought with money) ───────────────────

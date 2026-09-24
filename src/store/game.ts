@@ -44,7 +44,9 @@ type GameState = {
   checkIns: string[];
   /** Accessories bought in the shop with seeds. */
   bought: AccessoryId[];
+  /** Put on or take off. A full outfit also puts on its matching backdrop (which can then be changed). */
   toggleAccessory: (id: AccessoryId) => void;
+  takeOff: (slot: Slot) => void;
   /** Takes off anything not in `owned` (e.g. admin-mode outfits once admin mode is off). */
   keepOnly: (owned: AccessoryId[]) => void;
   /** Silent, automatic: the first time the fridge is looked at each day. */
@@ -66,6 +68,13 @@ type GameState = {
   showMoment: (moment: Moment) => void;
   dismissMoment: () => void;
 };
+
+type Equipped = Partial<Record<Slot, AccessoryId>>;
+
+function wear(equipped: Equipped, id: AccessoryId): Equipped {
+  const { slot, backdrop } = ACCESSORIES[id];
+  return { ...equipped, [slot]: id, ...(backdrop ? { backdrop } : {}) };
+}
 
 export const useGame = create<GameState>()(
   persist(
@@ -96,8 +105,7 @@ export const useGame = create<GameState>()(
         const s = useGame.getState();
         const price = ACCESSORIES[id].price;
         if (price === undefined || s.bought.includes(id) || seedBalance() < price) return false;
-        const slot = ACCESSORIES[id].slot;
-        set({ bought: [...s.bought, id], equipped: { ...s.equipped, [slot]: id }, moment: { kind: 'bought', id } });
+        set({ bought: [...s.bought, id], equipped: wear(s.equipped, id), moment: { kind: 'bought', id } });
         haptic('success');
         return true;
       },
@@ -108,8 +116,9 @@ export const useGame = create<GameState>()(
       toggleAccessory: (id) =>
         set((s) => {
           const slot = ACCESSORIES[id].slot;
-          return { equipped: { ...s.equipped, [slot]: s.equipped[slot] === id ? undefined : id } };
+          return { equipped: s.equipped[slot] === id ? { ...s.equipped, [slot]: undefined } : wear(s.equipped, id) };
         }),
+      takeOff: (slot) => set((s) => ({ equipped: { ...s.equipped, [slot]: undefined } })),
       showMoment: (moment) => set({ moment }),
       dismissMoment: () => set({ moment: null }),
     }),
