@@ -11,7 +11,7 @@ Built with React Native + Expo for the RevenueCat Shipaton 2026 (Next Gen Award)
 ## Try it
 
 - **Android:** download `fridge-rescue-demo.apk` from the [latest release](https://github.com/DrunkWiz/fridge-rescue/releases/latest) and install it (allow installs from your browser or file manager when asked). It runs on its own, with no dev server.
-- **In the browser:** [drunkwiz.github.io/fridge-rescue](https://drunkwiz.github.io/fridge-rescue/). Purchases work through the Test Store; the rewarded ad is simulated and camera scanning depends on your browser.
+- **In the browser:** [drunkwiz.github.io/fridge-rescue](https://drunkwiz.github.io/fridge-rescue/). Everything except the purchase works: RevenueCat's Paywall component has no web version yet, so it shows a preview. Use admin mode below to try Pro, or the APK for the real Test Store purchase. The rewarded ad is simulated.
 - **Judges:** to try every Pro feature and outfit without buying anything, open the **Impact** tab → **"judges & testing: admin mode →"** → password `admin`. Turn it off to see the real purchase flow.
 
 ## The problem
@@ -144,7 +144,7 @@ The build uses Google's official **test ad unit**, so no AdMob account is needed
 
 **Store rules.** The app moves **food, not money**. Monetary charitable donations can't go through in-app purchase on either store (Apple requires Apple Pay or a web flow for nonprofit donations), so the donation flow deliberately involves no payment at all.
 
-**No developer account needed.** Purchases run against RevenueCat's **Test Store**, so the full purchase flow works on a development build and in the browser preview, without App Store Connect or Play Console.
+**No developer account needed.** Purchases run against RevenueCat's **Test Store**, so the full purchase flow works on Android (the dev build and the demo APK) without App Store Connect or Play Console. On the web, RevenueCat's Paywall component shows a preview instead.
 
 **For judges: admin mode.** To try everything without a purchase, open the **Impact** tab, tap **"judges & testing: admin mode →"** at the bottom, and enter the password **`admin`** (not case-sensitive). (Long-pressing the GO PRO pill opens the same screen.) It turns on every Pro feature and unlocks every outfit for Sprout, including badge rewards, shop items and out-of-season ones, all free to put on and swap. The password is public on purpose. The app is never shipped to a store, so this is a demo convenience, and it would be removed before any real release.
 
@@ -190,7 +190,7 @@ npm install
 cp .env.example .env    # all keys optional — see below
 ```
 
-**Run in the browser** (fastest way to try it; purchases work with a Test Store key):
+**Run in the browser** (fastest way to try it; the paywall is a preview on web, so test purchases on Android):
 
 ```bash
 npm run web
