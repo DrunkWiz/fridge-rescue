@@ -235,4 +235,4 @@ npm run typecheck
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). Using the app: [Terms of Service](TERMS.md) · [Privacy Policy](PRIVACY.md).
