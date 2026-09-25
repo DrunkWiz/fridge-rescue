@@ -37,9 +37,9 @@ Existing trackers (Fridgi, EatSpoiler, FreshSave, FridgeUp, Use By, FridgeSmartâ
 |---|---|---|
 | <img src="docs/screenshots/02-rescue.png" width="240" alt="Rescue: one recipe from the food about to expire"> | <img src="docs/screenshots/03-donate.png" width="240" alt="Donation box: 8 spare items, about 6 meals for someone"> | <img src="docs/screenshots/04-sprout.png" width="240" alt="Sprout: growth, streak, money saved, daily stars and badges"> |
 
-| Shop | Impact |
-|---|---|
-| <img src="docs/screenshots/05-shop.png" width="240" alt="Shop: opt-in rewarded ad for seeds, full outfits"> | <img src="docs/screenshots/06-impact.png" width="240" alt="Impact: meals rescued and donated, money saved, meal diary"> |
+| Shop | Impact | Pro paywall (RevenueCat) |
+|---|---|---|
+| <img src="docs/screenshots/05-shop.png" width="240" alt="Shop: opt-in rewarded ad for seeds, full outfits"> | <img src="docs/screenshots/06-impact.png" width="240" alt="Impact: meals rescued and donated, money saved, meal diary"> | <img src="docs/screenshots/07-paywall.png" width="240" alt="RevenueCat paywall: Give Sprout a boost, monthly and yearly plans"> |
 
 ## How it works
 
