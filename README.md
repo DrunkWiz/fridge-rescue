@@ -8,6 +8,12 @@ Built with React Native + Expo for the RevenueCat Shipaton 2026 (Next Gen Award)
 
 ---
 
+## Try it
+
+- **Android:** download `fridge-rescue-demo.apk` from the [latest release](https://github.com/DrunkWiz/fridge-rescue/releases/latest) and install it (allow installs from your browser or file manager when asked). It runs on its own, with no dev server.
+- **In the browser:** [drunkwiz.github.io/fridge-rescue](https://drunkwiz.github.io/fridge-rescue/). Purchases work through the Test Store; the rewarded ad is simulated and camera scanning depends on your browser.
+- **Judges:** to try every Pro feature and outfit without buying anything, open the **Impact** tab → **"judges & testing: admin mode →"** → password `admin`. Turn it off to see the real purchase flow.
+
 ## The problem
 
 Most household food waste isn't one big mistake. It's the yoghurt found three days late and the fourth tin of chickpeas bought because you forgot about the other three.
@@ -170,6 +176,7 @@ src/
 - **The AI key is in the app bundle.** Fine for a demo, not for production. Next: proxy the recipe call through a small backend that holds the key and rate-limits per user.
 - **Meals are an estimate.** One donated item ≈ 0.7 meals (`MEALS_PER_DONATED_ITEM`). It's a rough, conservative heuristic, not a nutritional calculation.
 - **Scanned shelf lives are estimates.** Receipts rarely print use-by dates, so Claude estimates typical shelf life; the review screen shows every date before anything is saved.
+- **The demo APK is a debuggable release build.** RevenueCat's Test Store refuses to run in non-debuggable builds, so [`plugins/with-demo-release.js`](plugins/with-demo-release.js) keeps the flag on. A store release would drop the plugin and use real store keys.
 - **Not yet built:** household sharing.
 
 ## Setup
