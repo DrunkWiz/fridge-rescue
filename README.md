@@ -120,7 +120,7 @@ The app is only useful if it's opened *before* food goes off, so the game layer 
 
 ## Monetization
 
-Built on RevenueCat: one `pro` entitlement, one offering (monthly and annual), and **RevenueCat's own Paywall component, configured remotely from the dashboard**. No prices or paywall copy are hard-coded in the app.
+Built on RevenueCat: one `fridge_rescue_pro` entitlement, one offering (monthly and annual), and **RevenueCat's own Paywall component, configured remotely from the dashboard**. No prices or paywall copy are hard-coded in the app.
 
 | Free | Pro | 
 |---|---|

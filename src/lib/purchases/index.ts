@@ -5,7 +5,7 @@ import { persist } from 'zustand/middleware';
 import { persistStorage, STORAGE_KEYS } from '@/lib/storage';
 
 /** The single entitlement configured in the RevenueCat dashboard. */
-export const ENTITLEMENT_ID = 'pro';
+export const ENTITLEMENT_ID = 'fridge_rescue_pro';
 
 /** Free users can track this many active items. Rescuing and donating are never gated. */
 export const FREE_ITEM_LIMIT = 25;
