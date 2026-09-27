@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import { FALLBACK_DROP_OFFS } from '@/data/fallback-drop-offs';
 
 export type LatLon = { lat: number; lon: number };
@@ -15,6 +17,13 @@ export type DropOff = {
 const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 export const SEARCH_RADIUS_KM = 15;
+
+/**
+ * OSM's usage policies require an identifying User-Agent: Nominatim answers 403 and
+ * Overpass 406 to Android's default "okhttp/x". Browsers send their own and won't let us set it.
+ */
+const OSM_HEADERS: Record<string, string> =
+  Platform.OS === 'web' ? {} : { 'User-Agent': 'FridgeRescue/1.0 (+https://github.com/DrunkWiz/fridge-rescue)' };
 const MAX_RESULTS = 20;
 
 /** Great-circle distance. Accurate enough for "which drop-off is closest". */
@@ -57,7 +66,7 @@ out center tags;`;
 
   const res = await fetch(OVERPASS_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: { ...OSM_HEADERS, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `data=${encodeURIComponent(query)}`,
   });
   if (!res.ok) throw new Error(`Overpass returned ${res.status}`);
@@ -94,7 +103,10 @@ export function bundledDropOffs(origin: LatLon, radiusKm = SEARCH_RADIUS_KM * 2)
 export async function findDropOffs(origin: LatLon): Promise<{ dropOffs: DropOff[]; osmFailed: boolean }> {
   const bundled = bundledDropOffs(origin);
   try {
-    const osm = await fetchFoodBanks(origin);
+    // The public Overpass server sheds load with the odd 429/504, so retry once before giving up.
+    const osm = await fetchFoodBanks(origin).catch(
+      () => new Promise<DropOff[]>((resolve, reject) => setTimeout(() => fetchFoodBanks(origin).then(resolve, reject), 1500)),
+    );
     const extra = bundled.filter((b) => !osm.some((o) => distanceKm(o.location, b.location) < 0.1));
     return { dropOffs: [...osm, ...extra].sort((a, b) => a.distanceKm - b.distanceKm), osmFailed: false };
   } catch (error) {
@@ -106,7 +118,7 @@ export async function findDropOffs(origin: LatLon): Promise<{ dropOffs: DropOff[
 /** Manual location entry: turn "Leeds" or a postcode into coordinates (keyless, OSM Nominatim). */
 export async function geocode(place: string): Promise<(LatLon & { label: string }) | null> {
   const res = await fetch(`${NOMINATIM_URL}?format=json&limit=1&q=${encodeURIComponent(place)}`, {
-    headers: { Accept: 'application/json' },
+    headers: { ...OSM_HEADERS, Accept: 'application/json' },
   });
   if (!res.ok) return null;
   const [hit] = (await res.json()) as { lat: string; lon: string; display_name: string }[];
