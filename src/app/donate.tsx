@@ -109,7 +109,11 @@ function WhereStep({ onPick }: { onPick: (dropOff: DropOff | { name: string }) =
         setMessage('Location permission was declined — type a town or postcode instead.');
         return;
       }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      // A fresh fix can time out indoors; the last known position is close enough to find a food bank.
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }).catch(() =>
+        Location.getLastKnownPositionAsync(),
+      );
+      if (!pos) throw new Error('No position');
       await search({ lat: pos.coords.latitude, lon: pos.coords.longitude });
     } catch {
       setStatus('idle');
@@ -202,7 +206,8 @@ function ConfirmStep({ dropOff, units, onConfirm }: { dropOff: DropOff | { name:
         <ThemedText type="subtitle" style={{ color: theme.tint, fontSize: 28, lineHeight: 34 }}>
           {units} item{units === 1 ? '' : 's'} · ≈ {estimateMeals(units)} meals
         </ThemedText>
-        <ThemedText style={{ textAlign: 'center' }}>to {dropOff.name}</ThemedText>
+        {/* One string, full width: Android mis-measures centred text split into parts and clips it ("to The"). */}
+        <ThemedText style={{ textAlign: 'center', alignSelf: 'stretch' }}>{`to ${dropOff.name}`}</ThemedText>
         {place?.address && (
           <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
             {place.address}
