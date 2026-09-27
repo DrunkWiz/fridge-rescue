@@ -10,6 +10,7 @@ Built with React Native + Expo for the RevenueCat Shipaton 2026 (Next Gen Award)
 
 ## Try it
 
+- **Demo video (1:34):** [youtu.be/zOKLkAsey7o](https://youtu.be/zOKLkAsey7o)
 - **Android:** download `fridge-rescue-demo.apk` from the [latest release](https://github.com/DrunkWiz/fridge-rescue/releases/latest) and install it (allow installs from your browser or file manager when asked). It runs on its own, with no dev server.
 - **In the browser:** [drunkwiz.github.io/fridge-rescue](https://drunkwiz.github.io/fridge-rescue/). Everything except the purchase works: RevenueCat's Paywall component has no web version yet, so it shows a preview. Use admin mode below to try Pro, or the APK for the real Test Store purchase. The rewarded ad is simulated.
 - **Judges:** to try every Pro feature and outfit without buying anything, open the **Impact** tab → **"judges & testing: admin mode →"** → password `admin`. Turn it off to see the real purchase flow.
@@ -32,7 +33,10 @@ Existing trackers (Fridgi, EatSpoiler, FreshSave, FridgeUp, Use By, FridgeSmart�
 
 ## Demo
 
-<!-- TODO: YouTube link (under 2 minutes) -->
+**▶ [Watch the 1:34 demo on YouTube](https://youtu.be/zOKLkAsey7o)**: rescue, donate, Sprout, a rewarded ad, and a RevenueCat Test Store purchase unlocking Pro.
+
+[![Fridge Rescue demo video](https://img.youtube.com/vi/zOKLkAsey7o/hqdefault.jpg)](https://youtu.be/zOKLkAsey7o)
+
 | Rescue | Donate | Sprout |
 |---|---|---|
 | <img src="docs/screenshots/02-rescue.png" width="240" alt="Rescue: one recipe from the food about to expire"> | <img src="docs/screenshots/03-donate.png" width="240" alt="Donation box: 8 spare items, about 6 meals for someone"> | <img src="docs/screenshots/04-sprout.png" width="240" alt="Sprout: growth, streak, money saved, daily stars and badges"> |
