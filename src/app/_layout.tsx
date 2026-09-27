@@ -6,6 +6,7 @@ import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { CelebrationOverlay } from '@/components/celebration';
+import { PhoneLayoutHint } from '@/components/phone-layout-hint';
 import { Fonts } from '@/constants/theme';
 import { ensureNotificationPermission, rescheduleExpiryReminders } from '@/lib/notifications';
 import { initPurchases } from '@/lib/purchases';
@@ -56,6 +57,8 @@ export default function RootLayout() {
       </Stack>
       {/* Celebrations can be triggered from any screen, so they live above the navigator. */}
       <CelebrationOverlay />
+      {/* Web demo only: nudges desktop viewers into a phone-sized layout. */}
+      <PhoneLayoutHint />
       {/* Dark icons on the light theme, light on dark; without this Android drew white icons on white. */}
       <StatusBar style="auto" />
     </ThemeProvider>
